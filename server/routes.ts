@@ -13,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Authentication routes
-  app.post("/api/auth/login", requireNoAuth, (req, res, next) => {
+  app.post("/api/auth/login", (req, res, next) => {
     try {
       const { username, password } = userLoginSchema.parse(req.body);
       
@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/signup", requireNoAuth, async (req, res) => {
+  app.post("/api/auth/signup", async (req, res) => {
     try {
       const userData = userSignupSchema.parse(req.body);
       

@@ -1,10 +1,9 @@
-import { type Location, type User, type UpsertUser } from "@shared/schema";
-import { users } from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { users, type User, type UpsertUser } from "@shared/schema";
+import bcrypt from 'bcryptjs';
 
+// Interface for storage operations
 export interface IStorage {
-  // User operations for authentication
+  // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -13,76 +12,8 @@ export interface IStorage {
   validatePassword(user: User, password: string): Promise<boolean>;
 }
 
-// Database storage implementation
-export class DatabaseStorage implements IStorage {
-  async getUser(id: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      return user || undefined;
-    } catch (error) {
-      console.error("Error getting user:", error);
-      return undefined;
-    }
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.username, username));
-      return user || undefined;
-    } catch (error) {
-      console.error("Error getting user by username:", error);
-      return undefined;
-    }
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
-      return user || undefined;
-    } catch (error) {
-      console.error("Error getting user by email:", error);
-      return undefined;
-    }
-  }
-
-  async createUser(userData: UpsertUser & { password: string }): Promise<User> {
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const { password, ...userWithoutPassword } = userData;
-    
-    const [user] = await db
-      .insert(users)
-      .values({
-        ...userWithoutPassword,
-        preferences: { hashedPassword },
-      })
-      .returning();
-    return user;
-  }
-
-  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({
-        ...userData,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
-  }
-
-  async validatePassword(user: User, password: string): Promise<boolean> {
-    const bcrypt = require('bcryptjs');
-    const preferences = user.preferences as any;
-    if (!preferences?.hashedPassword) return false;
-    return bcrypt.compare(password, preferences.hashedPassword);
-  }
-}
-
-// Simple in-memory storage for demo purposes with demo users
 export class MemStorage implements IStorage {
-  private demoUsers = [
+  private demoUsers: User[] = [
     {
       id: 'demo-user-1',
       username: 'demo',
@@ -92,7 +23,8 @@ export class MemStorage implements IStorage {
       phone: '+1234567890',
       profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
       dateOfBirth: null,
-      preferences: { hashedPassword: '$2a$10$Xk9qP1KmZ7vYlCvOJxQvBOiXOqFGrOHBLfYJVKzAzEJKbfWnJ1KjW' }, // password: 'demo123'
+      // Pre-hashed password for 'demo123'
+      preferences: { hashedPassword: '$2b$10$n3W5gLgbBAFtgK4bKlZdr.2yeR.izzR7PEo3dMbMFvJk9w2g6gJGK' },
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -105,7 +37,8 @@ export class MemStorage implements IStorage {
       phone: '+1987654321',
       profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
       dateOfBirth: null,
-      preferences: { hashedPassword: '$2a$10$Xk9qP1KmZ7vYlCvOJxQvBOiXOqFGrOHBLfYJVKzAzEJKbfWnJ1KjW' }, // password: 'demo123'
+      // Pre-hashed password for 'demo123'
+      preferences: { hashedPassword: '$2b$10$n3W5gLgbBAFtgK4bKlZdr.2yeR.izzR7PEo3dMbMFvJk9w2g6gJGK' },
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -124,7 +57,6 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(userData: UpsertUser & { password: string }): Promise<User> {
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const newUser: User = {
       id: `user-${Date.now()}`,
@@ -156,7 +88,6 @@ export class MemStorage implements IStorage {
   }
 
   async validatePassword(user: User, password: string): Promise<boolean> {
-    const bcrypt = require('bcryptjs');
     const preferences = user.preferences as any;
     if (!preferences?.hashedPassword) return false;
     return bcrypt.compare(password, preferences.hashedPassword);
