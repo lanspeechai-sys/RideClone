@@ -5,7 +5,11 @@ import { LocationInputs } from "@/components/location-inputs";
 import { RideComparison } from "@/components/ride-comparison";
 import { LoadingState } from "@/components/loading-state";
 import { ErrorState } from "@/components/error-state";
-import { RefreshCw, Menu } from "lucide-react";
+import { RecentLocations } from "@/components/recent-locations";
+import { TripSummary } from "@/components/trip-summary";
+import { AppHeader } from "@/components/app-header";
+import { FareTracker } from "@/components/fare-tracker";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { TripRequest, RideComparisonResponse, Location } from "@shared/schema";
@@ -14,7 +18,9 @@ export default function Home() {
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
   const [dropoffLocation, setDropoffLocation] = useState<Location | null>(null);
   const [comparisonData, setComparisonData] = useState<RideComparisonResponse | null>(null);
+  const [previousComparisonData, setPreviousComparisonData] = useState<RideComparisonResponse | null>(null);
   const [sortBy, setSortBy] = useState<"price" | "time" | "rating">("price");
+  const [showRecentLocations, setShowRecentLocations] = useState(true);
   const { toast } = useToast();
 
   const compareRidesMutation = useMutation({
@@ -23,6 +29,7 @@ export default function Home() {
       return response.json() as Promise<RideComparisonResponse>;
     },
     onSuccess: (data) => {
+      setPreviousComparisonData(comparisonData);
       setComparisonData(data);
       toast({
         title: "Rides found!",
@@ -56,6 +63,10 @@ export default function Home() {
 
   const handleRefresh = () => {
     if (pickupLocation && dropoffLocation) {
+      toast({
+        title: "Refreshing prices...",
+        description: "Getting latest ride estimates",
+      });
       compareRidesMutation.mutate({
         pickup: pickupLocation,
         dropoff: dropoffLocation,
@@ -69,55 +80,63 @@ export default function Home() {
     setDropoffLocation(temp);
   };
 
+  const handleQuickLocationSelect = (location: Location, isPickup: boolean = true) => {
+    if (isPickup) {
+      setPickupLocation(location);
+    } else {
+      setDropoffLocation(location);
+    }
+    setShowRecentLocations(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-inter">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-primary">RideCompare</h1>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full hover:bg-gray-100"
-              data-testid="button-menu"
-            >
-              <Menu className="w-6 h-6 text-gray-600" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        title="RideCompare" 
+        showNotifications={comparisonData !== null}
+      />
 
       <main className="pb-20">
         {/* Location Inputs */}
         <LocationInputs
           pickupLocation={pickupLocation}
           dropoffLocation={dropoffLocation}
-          onPickupChange={setPickupLocation}
-          onDropoffChange={setDropoffLocation}
+          onPickupChange={(location) => {
+            setPickupLocation(location);
+            if (location) setShowRecentLocations(false);
+          }}
+          onDropoffChange={(location) => {
+            setDropoffLocation(location);
+            if (location) setShowRecentLocations(false);
+          }}
           onSwapLocations={handleSwapLocations}
           onSearchRides={handleSearchRides}
           isLoading={compareRidesMutation.isPending}
         />
 
+        {/* Recent Locations */}
+        {showRecentLocations && !comparisonData && (
+          <div className="px-4">
+            <RecentLocations 
+              onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)}
+            />
+          </div>
+        )}
+
         {/* Trip Summary */}
         {comparisonData && (
-          <section className="bg-white mt-2 shadow-sm">
-            <div className="p-4">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>
-                  Distance: <span className="font-medium text-primary" data-testid="text-distance">
-                    {(comparisonData.tripDistance / 1000).toFixed(1)} km
-                  </span>
-                </span>
-                <span>
-                  Duration: <span className="font-medium text-primary" data-testid="text-duration">
-                    {comparisonData.tripDuration} min
-                  </span>
-                </span>
-              </div>
-            </div>
-          </section>
+          <div className="px-4">
+            <TripSummary data={comparisonData} />
+          </div>
+        )}
+
+        {/* Fare Tracker */}
+        {comparisonData && previousComparisonData && (
+          <FareTracker 
+            currentEstimates={comparisonData.estimates}
+            previousEstimates={previousComparisonData.estimates}
+          />
         )}
 
         {/* Loading State */}
@@ -137,6 +156,8 @@ export default function Home() {
             estimates={comparisonData.estimates}
             sortBy={sortBy}
             onSortChange={setSortBy}
+            pickup={pickupLocation}
+            dropoff={dropoffLocation}
           />
         )}
       </main>

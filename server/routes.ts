@@ -116,6 +116,7 @@ async function getUberEstimates(request: any) {
 
 function getMockUberEstimates(distance: number, duration: number) {
   const basePrice = Math.round((distance / 1000) * 3.5 + 5);
+  const surge = Math.random() > 0.7 ? 1.2 + Math.random() * 0.8 : 1.0; // 30% chance of surge
   
   return [
     {
@@ -123,34 +124,41 @@ function getMockUberEstimates(distance: number, duration: number) {
       provider: "uber" as const,
       serviceName: "UberX",
       description: "Affordable everyday rides",
-      price: basePrice,
-      priceRange: `$${basePrice - 1}-${basePrice + 2}`,
+      price: Math.round(basePrice * surge),
+      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
       currency: "USD",
-      arrivalTime: "3 min away",
+      arrivalTime: `${Math.floor(Math.random() * 4) + 2} min away`,
       capacity: 4,
       category: "economy" as const,
       estimatedDuration: duration,
       distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.7 + Math.random() * 0.3,
+      eta: Math.floor(Math.random() * 4) + 2,
     },
     {
       id: "uber-comfort",
       provider: "uber" as const,
       serviceName: "Uber Comfort",
       description: "Newer cars, extra space",
-      price: Math.round(basePrice * 1.35),
-      priceRange: `$${Math.round(basePrice * 1.25)}-${Math.round(basePrice * 1.5)}`,
+      price: Math.round(basePrice * 1.35 * surge),
+      priceRange: `$${Math.round(basePrice * 1.25 * surge)}-${Math.round(basePrice * 1.5 * surge)}`,
       currency: "USD",
-      arrivalTime: "4 min away",
+      arrivalTime: `${Math.floor(Math.random() * 3) + 3} min away`,
       capacity: 4,
       category: "premium" as const,
       estimatedDuration: duration,
       distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.8 + Math.random() * 0.2,
+      eta: Math.floor(Math.random() * 3) + 3,
     },
   ];
 }
 
 function getMockBoltEstimates(distance: number, duration: number) {
   const basePrice = Math.round((distance / 1000) * 3.2 + 4.5);
+  const surge = Math.random() > 0.8 ? 1.1 + Math.random() * 0.4 : 1.0; // 20% chance of surge
   
   return [
     {
@@ -158,20 +166,41 @@ function getMockBoltEstimates(distance: number, duration: number) {
       provider: "bolt" as const,
       serviceName: "Bolt",
       description: "Fast & affordable",
-      price: basePrice,
-      priceRange: `$${basePrice - 1}-${basePrice + 2}`,
+      price: Math.round(basePrice * surge),
+      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
       currency: "USD",
-      arrivalTime: "5 min away",
+      arrivalTime: `${Math.floor(Math.random() * 4) + 4} min away`,
       capacity: 4,
       category: "economy" as const,
       estimatedDuration: duration,
       distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.5 + Math.random() * 0.4,
+      eta: Math.floor(Math.random() * 4) + 4,
+    },
+    {
+      id: "bolt-comfort",
+      provider: "bolt" as const,
+      serviceName: "Bolt Comfort",
+      description: "More comfortable rides",
+      price: Math.round(basePrice * 1.25 * surge),
+      priceRange: `$${Math.round(basePrice * 1.15 * surge)}-${Math.round(basePrice * 1.35 * surge)}`,
+      currency: "USD",
+      arrivalTime: `${Math.floor(Math.random() * 3) + 5} min away`,
+      capacity: 4,
+      category: "premium" as const,
+      estimatedDuration: duration,
+      distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.6 + Math.random() * 0.3,
+      eta: Math.floor(Math.random() * 3) + 5,
     },
   ];
 }
 
 function getMockYangoEstimates(distance: number, duration: number) {
   const basePrice = Math.round((distance / 1000) * 3.0 + 4);
+  const surge = Math.random() > 0.85 ? 1.05 + Math.random() * 0.3 : 1.0; // 15% chance of surge
   
   return [
     {
@@ -179,14 +208,34 @@ function getMockYangoEstimates(distance: number, duration: number) {
       provider: "yango" as const,
       serviceName: "Economy",
       description: "Budget-friendly option",
-      price: basePrice,
-      priceRange: `$${basePrice - 1}-${basePrice + 2}`,
+      price: Math.round(basePrice * surge),
+      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
       currency: "USD",
-      arrivalTime: "7 min away",
+      arrivalTime: `${Math.floor(Math.random() * 5) + 6} min away`,
       capacity: 4,
       category: "economy" as const,
       estimatedDuration: duration,
       distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.3 + Math.random() * 0.5,
+      eta: Math.floor(Math.random() * 5) + 6,
+    },
+    {
+      id: "yango-comfort",
+      provider: "yango" as const,
+      serviceName: "Comfort",
+      description: "More comfort for your journey",
+      price: Math.round(basePrice * 1.3 * surge),
+      priceRange: `$${Math.round(basePrice * 1.2 * surge)}-${Math.round(basePrice * 1.4 * surge)}`,
+      currency: "USD",
+      arrivalTime: `${Math.floor(Math.random() * 4) + 7} min away`,
+      capacity: 4,
+      category: "premium" as const,
+      estimatedDuration: duration,
+      distance,
+      surge: surge > 1.0 ? surge : undefined,
+      rating: 4.4 + Math.random() * 0.4,
+      eta: Math.floor(Math.random() * 4) + 7,
     },
   ];
 }

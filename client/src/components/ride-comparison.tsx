@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { RideEstimate } from "@shared/schema";
+import { BookingModal } from "./booking-modal";
+import { PriceAlerts } from "./price-alerts";
+import type { RideEstimate, Location } from "@shared/schema";
 
 interface RideComparisonProps {
   estimates: RideEstimate[];
   sortBy: "price" | "time" | "rating";
   onSortChange: (sort: "price" | "time" | "rating") => void;
+  pickup: Location | null;
+  dropoff: Location | null;
 }
 
-export function RideComparison({ estimates, sortBy, onSortChange }: RideComparisonProps) {
+export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropoff }: RideComparisonProps) {
+  const [selectedRide, setSelectedRide] = useState<RideEstimate | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const sortedEstimates = [...estimates].sort((a, b) => {
     switch (sortBy) {
       case "price":
@@ -32,6 +38,19 @@ export function RideComparison({ estimates, sortBy, onSortChange }: RideComparis
     return logos[provider as keyof typeof logos] || { bg: "bg-gray-600", text: provider.toUpperCase() };
   };
 
+  const handleBookRide = (ride: RideEstimate) => {
+    setSelectedRide(ride);
+    setIsBookingModalOpen(true);
+  };
+
+  const closeBookingModal = () => {
+    setIsBookingModalOpen(false);
+    setSelectedRide(null);
+  };
+
+  const lowestPrice = Math.min(...estimates.map(e => e.price));
+  const highestPrice = Math.max(...estimates.map(e => e.price));
+
   return (
     <>
       <section className="mt-4 px-4">
@@ -40,10 +59,16 @@ export function RideComparison({ estimates, sortBy, onSortChange }: RideComparis
         <div className="space-y-3">
           {sortedEstimates.map((ride) => {
             const logo = getProviderLogo(ride.provider);
+            const isLowestPrice = ride.price === lowestPrice;
+            
             return (
               <div
                 key={ride.id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 ${
+                  isLowestPrice 
+                    ? "border-green-200 bg-green-50 ring-2 ring-green-100" 
+                    : "border-gray-100 hover:shadow-md cursor-pointer"
+                }`}
                 data-testid={`card-ride-${ride.id}`}
               >
                 <div className="flex items-center justify-between">
@@ -66,6 +91,14 @@ export function RideComparison({ estimates, sortBy, onSortChange }: RideComparis
                         <span className="text-xs text-gray-500" data-testid={`text-capacity-${ride.id}`}>
                           {ride.capacity} seats
                         </span>
+                        {ride.rating && (
+                          <>
+                            <span className="text-xs text-gray-400">•</span>
+                            <span className="text-xs text-yellow-600 font-medium" data-testid={`text-rating-${ride.id}`}>
+                              ⭐ {ride.rating.toFixed(1)}
+                            </span>
+                          </>
+                        )}
                         {ride.category === "premium" && (
                           <>
                             <span className="text-xs text-gray-400">•</span>
@@ -75,15 +108,39 @@ export function RideComparison({ estimates, sortBy, onSortChange }: RideComparis
                           </>
                         )}
                       </div>
+                      {ride.surge && ride.surge > 1.0 && (
+                        <div className="mt-2 inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                          🔥 {ride.surge.toFixed(1)}x surge pricing
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-primary" data-testid={`text-price-${ride.id}`}>
-                      ${ride.price.toFixed(2)}
+                  <div className="text-right space-y-2">
+                    <div className="space-y-1">
+                      <div className={`text-lg font-bold ${isLowestPrice ? "text-green-700" : "text-primary"}`} data-testid={`text-price-${ride.id}`}>
+                        ${ride.price.toFixed(2)}
+                        {isLowestPrice && (
+                          <span className="ml-1 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full">
+                            BEST
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500" data-testid={`text-price-range-${ride.id}`}>
+                        {ride.priceRange}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500" data-testid={`text-price-range-${ride.id}`}>
-                      {ride.priceRange}
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleBookRide(ride)}
+                      className={`w-full text-xs py-2 ${
+                        isLowestPrice 
+                          ? "bg-green-600 hover:bg-green-700 text-white" 
+                          : "bg-primary hover:bg-primary/90 text-white"
+                      }`}
+                      data-testid={`button-book-${ride.id}`}
+                    >
+                      Book Now
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -127,6 +184,21 @@ export function RideComparison({ estimates, sortBy, onSortChange }: RideComparis
           </div>
         </div>
       </section>
+
+      {/* Price Alerts */}
+      <PriceAlerts 
+        currentLowPrice={lowestPrice} 
+        currentHighPrice={highestPrice} 
+      />
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={closeBookingModal}
+        ride={selectedRide}
+        pickup={pickup}
+        dropoff={dropoff}
+      />
     </>
   );
 }
