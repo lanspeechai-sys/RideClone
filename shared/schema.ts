@@ -1,4 +1,14 @@
 import { z } from "zod";
+import { createInsertSchema } from "drizzle-zod";
+import { sql } from 'drizzle-orm';
+import {
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+  index,
+  jsonb,
+} from "drizzle-orm/pg-core";
 
 export const locationSchema = z.object({
   address: z.string().min(1, "Address is required"),
@@ -53,6 +63,67 @@ export const bookingRequestSchema = z.object({
   paymentMethod: z.string().default("card"),
 });
 
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  username: varchar("username").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  phone: varchar("phone"),
+  dateOfBirth: timestamp("date_of_birth"),
+  preferences: jsonb("preferences"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User authentication schemas
+export const userLoginSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const userSignupSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
+export const userProfileUpdateSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  profileImageUrl: z.string().optional(),
+});
+
+export const insertUserSchema = createInsertSchema(users);
+export const upsertUserSchema = insertUserSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type User = typeof users.$inferSelect;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
+export type UserLogin = z.infer<typeof userLoginSchema>;
+export type UserSignup = z.infer<typeof userSignupSchema>;
+export type UserProfileUpdate = z.infer<typeof userProfileUpdateSchema>;
 export type Location = z.infer<typeof locationSchema>;
 export type RideEstimate = z.infer<typeof rideEstimateSchema>;
 export type TripRequest = z.infer<typeof tripRequestSchema>;

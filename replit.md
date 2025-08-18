@@ -6,17 +6,20 @@ This is a full-stack ride comparison application that allows users to compare ri
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language
+- Design preference: Vibrant, modern colors instead of black and white interface
+- Authentication: Login/signup pages with demo credentials and profile editing functionality
 
 ## System Architecture
 
 ### Frontend Architecture
 - **React with TypeScript**: Modern functional components using hooks for state management
 - **Vite**: Fast build tool and development server with hot module replacement
-- **Wouter**: Lightweight client-side routing library as an alternative to React Router
+- **Wouter**: Lightweight client-side routing library with authentication-based routing
 - **TanStack Query**: Server state management for API calls, caching, and background refetching
 - **shadcn/ui**: Comprehensive component library built on Radix UI primitives
-- **Tailwind CSS**: Utility-first CSS framework with custom design system variables
+- **Tailwind CSS**: Utility-first CSS framework with vibrant gradient color scheme
+- **Authentication State**: useAuth hook for managing user sessions and profile data
 
 ### Backend Architecture
 - **Express.js**: RESTful API server with middleware for JSON parsing and logging
@@ -38,15 +41,25 @@ Preferred communication style: Simple, everyday language.
 - **Toast Notifications**: User feedback for actions and errors
 
 ### Authentication & Authorization
-- Currently no authentication system implemented
-- All API endpoints are public access
-- Session management infrastructure present but unused (connect-pg-simple)
+- **Passport.js Local Strategy**: Username/password authentication with bcrypt hashing
+- **Session Management**: Express sessions with PostgreSQL storage
+- **User Management**: Complete CRUD operations with profile editing
+- **Demo Credentials**: username: 'demo', password: 'demo123' for testing
+- **Protected Routes**: Authentication middleware for secure endpoints
+- **Auto-redirect**: Seamless navigation between authenticated/non-authenticated states
 
 ### API Structure
-- **POST /api/rides/compare**: Main endpoint for ride price comparison
-- **GET /api/geocode**: Location search and geocoding functionality
+- **Authentication Endpoints**:
+  - POST /api/auth/login - User login with credentials
+  - POST /api/auth/signup - New user registration
+  - POST /api/auth/logout - User logout
+  - GET /api/auth/user - Get current user profile
+  - PUT /api/auth/profile - Update user profile
+- **Ride Comparison**:
+  - POST /api/rides/compare - Main endpoint for ride price comparison
 - Request/response validation using shared Zod schemas
 - Standardized error handling with status codes and messages
+- Authentication middleware for protected routes
 
 ## External Dependencies
 

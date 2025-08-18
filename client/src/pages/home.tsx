@@ -90,7 +90,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-inter">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-cyan-50 font-inter">
       {/* Header */}
       <AppHeader 
         title="RideCompare" 

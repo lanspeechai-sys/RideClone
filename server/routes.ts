@@ -1,11 +1,148 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
-import { tripRequestSchema, type RideComparisonResponse } from "@shared/schema";
+import passport from 'passport';
+import { tripRequestSchema, type RideComparisonResponse, userLoginSchema, userSignupSchema, userProfileUpdateSchema } from "@shared/schema";
+import { setupAuth, requireAuth, requireNoAuth } from "./auth";
+import { storage } from "./storage";
 
 const UBER_SERVER_TOKEN = process.env.UBER_SERVER_TOKEN || process.env.VITE_UBER_SERVER_TOKEN || "";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
+
+  // Authentication routes
+  app.post("/api/auth/login", requireNoAuth, (req, res, next) => {
+    try {
+      const { username, password } = userLoginSchema.parse(req.body);
+      
+      passport.authenticate('local', (err: any, user: any, info: any) => {
+        if (err) {
+          return res.status(500).json({ error: 'Authentication error' });
+        }
+        if (!user) {
+          return res.status(401).json({ error: info.message || 'Invalid credentials' });
+        }
+        
+        req.logIn(user, (err: any) => {
+          if (err) {
+            return res.status(500).json({ error: 'Login error' });
+          }
+          return res.json({ 
+            message: 'Login successful',
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              profileImageUrl: user.profileImageUrl,
+            }
+          });
+        });
+      })(req, res, next);
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid request data' });
+    }
+  });
+
+  app.post("/api/auth/signup", requireNoAuth, async (req, res) => {
+    try {
+      const userData = userSignupSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Username already exists' });
+      }
+
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already exists' });
+      }
+
+      // Create new user
+      const newUser = await storage.createUser(userData);
+      
+      // Auto-login after signup
+      req.logIn(newUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Signup successful but login failed' });
+        }
+        return res.json({ 
+          message: 'Signup successful',
+          user: {
+            id: newUser.id,
+            username: newUser.username,
+            email: newUser.email,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            profileImageUrl: newUser.profileImageUrl,
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      return res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid request data' });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      return res.json({ message: 'Logout successful' });
+    });
+  });
+
+  app.get("/api/auth/user", requireAuth, (req, res) => {
+    const user = req.user as any;
+    return res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      profileImageUrl: user.profileImageUrl,
+    });
+  });
+
+  app.put("/api/auth/profile", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const updateData = userProfileUpdateSchema.parse(req.body);
+      
+      // Convert dateOfBirth string to Date if provided
+      const processedUpdateData = {
+        ...updateData,
+        dateOfBirth: updateData.dateOfBirth ? new Date(updateData.dateOfBirth) : undefined,
+      };
+      
+      const updatedUser = await storage.updateUser(user.id, processedUpdateData);
+      
+      return res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          phone: updatedUser.phone,
+          dateOfBirth: updatedUser.dateOfBirth,
+          profileImageUrl: updatedUser.profileImageUrl,
+        }
+      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      return res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid request data' });
+    }
+  });
+
   // Get ride price estimates
   app.post("/api/rides/compare", async (req, res) => {
     try {
