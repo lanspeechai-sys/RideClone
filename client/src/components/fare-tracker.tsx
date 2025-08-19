@@ -1,107 +1,114 @@
-import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { RideEstimate } from "@shared/schema";
 
 interface FareTrackerProps {
   currentEstimates: RideEstimate[];
-  previousEstimates: RideEstimate[] | null;
+  previousEstimates: RideEstimate[];
+}
+
+interface PriceChange {
+  service: string;
+  vehicleType: string;
+  currentPrice: number;
+  previousPrice: number;
+  change: number;
+  changePercent: number;
+  trend: "up" | "down" | "same";
 }
 
 export function FareTracker({ currentEstimates, previousEstimates }: FareTrackerProps) {
-  const [fareChanges, setFareChanges] = useState<Array<{
-    id: string;
-    serviceName: string;
-    change: number;
-    changePercent: number;
-    trend: "up" | "down" | "same";
-  }>>([]);
+  const calculatePriceChanges = (): PriceChange[] => {
+    const changes: PriceChange[] = [];
 
-  useEffect(() => {
-    if (!previousEstimates || previousEstimates.length === 0) return;
+    currentEstimates.forEach(current => {
+      const previous = previousEstimates.find(
+        prev => prev.provider === current.provider && prev.serviceName === current.serviceName
+      );
 
-    const changes = currentEstimates.map(current => {
-      const previous = previousEstimates.find(p => p.id === current.id);
-      if (!previous) return null;
+      if (previous) {
+        const change = current.price - previous.price;
+        const changePercent = (change / previous.price) * 100;
+        
+        changes.push({
+          service: current.provider,
+          vehicleType: current.serviceName,
+          currentPrice: current.price,
+          previousPrice: previous.price,
+          change,
+          changePercent,
+          trend: change > 0 ? "up" : change < 0 ? "down" : "same"
+        });
+      }
+    });
 
-      const change = current.price - previous.price;
-      const changePercent = Math.round((change / previous.price) * 100);
-      
-      let trend: "up" | "down" | "same" = "same";
-      if (change > 0.5) trend = "up";
-      else if (change < -0.5) trend = "down";
+    return changes;
+  };
 
-      return {
-        id: current.id,
-        serviceName: current.serviceName,
-        change,
-        changePercent,
-        trend,
-      };
-    }).filter(Boolean) as Array<{
-      id: string;
-      serviceName: string;
-      change: number;
-      changePercent: number;
-      trend: "up" | "down" | "same";
-    }>;
+  const priceChanges = calculatePriceChanges();
+  const hasChanges = priceChanges.some(change => change.trend !== "same");
 
-    setFareChanges(changes.filter(c => c.trend !== "same"));
-  }, [currentEstimates, previousEstimates]);
-
-  if (fareChanges.length === 0) return null;
+  if (!hasChanges) {
+    return null;
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 mt-4 mx-4">
-      <h4 className="font-semibold text-primary mb-3 text-sm">Price Updates</h4>
-      
-      <div className="space-y-2">
-        {fareChanges.slice(0, 3).map(change => {
-          const TrendIcon = change.trend === "up" ? TrendingUp : 
-                           change.trend === "down" ? TrendingDown : Minus;
-          const trendColor = change.trend === "up" ? "text-red-600" : 
-                           change.trend === "down" ? "text-green-600" : "text-gray-500";
-          const bgColor = change.trend === "up" ? "bg-red-50 border-red-200" : 
-                         change.trend === "down" ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200";
-
-          return (
-            <div
-              key={change.id}
-              className={`flex items-center justify-between p-3 rounded-lg border ${bgColor}`}
-              data-testid={`fare-change-${change.id}`}
-            >
-              <div className="flex items-center space-x-3">
-                <TrendIcon className={`w-4 h-4 ${trendColor}`} />
-                <div>
-                  <div className="text-sm font-medium text-primary">
-                    {change.serviceName}
-                  </div>
-                  <div className={`text-xs ${trendColor}`}>
-                    {change.trend === "up" ? "Price increased" : "Price decreased"}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-right">
-                <div className={`text-sm font-bold ${trendColor}`}>
-                  {change.change > 0 ? "+" : ""}${change.change.toFixed(2)}
-                </div>
-                <div className={`text-xs ${trendColor}`}>
-                  ({change.change > 0 ? "+" : ""}{change.changePercent}%)
-                </div>
-              </div>
+    <Card className="mx-4 mb-4 border-blue-200 bg-blue-50/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-blue-600" />
+          Price Changes
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {priceChanges.map((change) => (
+          <div
+            key={`${change.service}-${change.vehicleType}`}
+            className="flex items-center justify-between py-2 px-3 bg-white rounded-lg border border-gray-100"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">
+                {change.service.toUpperCase()} {change.vehicleType}
+              </span>
             </div>
-          );
-        })}
-      </div>
 
-      {fareChanges.length > 3 && (
-        <div className="mt-3 text-center">
-          <Badge variant="secondary" className="text-xs">
-            +{fareChanges.length - 3} more changes
-          </Badge>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-sm font-bold">${change.currentPrice}</div>
+                <div className="text-xs text-gray-500">
+                  was ${change.previousPrice}
+                </div>
+              </div>
+
+              {change.trend === "up" && (
+                <Badge className="bg-red-100 text-red-800 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  +${Math.abs(change.change).toFixed(2)}
+                </Badge>
+              )}
+
+              {change.trend === "down" && (
+                <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                  <TrendingDown className="w-3 h-3" />
+                  -${Math.abs(change.change).toFixed(2)}
+                </Badge>
+              )}
+
+              {change.trend === "same" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Minus className="w-3 h-3" />
+                  No change
+                </Badge>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <div className="text-xs text-gray-600 text-center pt-2 border-t">
+          Prices may fluctuate based on demand and availability
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

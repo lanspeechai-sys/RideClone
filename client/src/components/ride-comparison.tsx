@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingModal } from "./booking-modal";
 import { PriceAlerts } from "./price-alerts";
+import { ArrowUpDown, Clock, MapPin, Star, DollarSign } from "lucide-react";
 import type { RideEstimate, Location } from "@shared/schema";
 
 interface RideComparisonProps {
@@ -41,11 +43,6 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
   const handleBookRide = (ride: RideEstimate) => {
     setSelectedRide(ride);
     setIsBookingModalOpen(true);
-  };
-
-  const closeBookingModal = () => {
-    setIsBookingModalOpen(false);
-    setSelectedRide(null);
   };
 
   const lowestPrice = Math.min(...estimates.map(e => e.price));
@@ -102,8 +99,14 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
                         {ride.category === "premium" && (
                           <>
                             <span className="text-xs text-gray-400">•</span>
-                            <Badge variant="secondary" className="text-xs text-accent font-medium">
-                              Premium
+                            <Badge className="bg-purple-100 text-purple-800 text-xs">Premium</Badge>
+                          </>
+                        )}
+                        {ride.surge && ride.surge > 1 && (
+                          <>
+                            <span className="text-xs text-gray-400">•</span>
+                            <Badge variant="destructive" className="text-xs">
+                              {ride.surge.toFixed(1)}x Surge
                             </Badge>
                           </>
                         )}
@@ -185,17 +188,22 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
         </div>
       </section>
 
-      {/* Price Alerts */}
-      <PriceAlerts 
-        currentLowPrice={lowestPrice} 
-        currentHighPrice={highestPrice} 
-      />
+      {/* Price Alerts Section */}
+      <section className="mt-6 px-4">
+        <PriceAlerts 
+          pickup={pickup}
+          dropoff={dropoff}
+          currentPrice={lowestPrice}
+          service={sortedEstimates[0]?.provider}
+          vehicleType={sortedEstimates[0]?.serviceName}
+        />
+      </section>
 
       {/* Booking Modal */}
       <BookingModal
-        isOpen={isBookingModalOpen}
-        onClose={closeBookingModal}
-        ride={selectedRide}
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+        estimate={selectedRide}
         pickup={pickup}
         dropoff={dropoff}
       />

@@ -41,10 +41,14 @@ This is a full-stack ride comparison application that allows users to compare ri
 - **Smart Authentication Flow**: Login/signup required only when comparing rides, with search data preservation
 - **Search History Management**: Local storage of search history with view, delete individual, and clear all functionality
 - **Text Input Persistence**: Search text remains visible in input fields after authentication
+- **Enhanced Booking System**: Complete booking modal with passenger details, confirmation flow, and booking IDs
+- **Price Alerts**: Set target prices for routes with smart suggestions and active/inactive toggles
+- **Price Change Tracking**: Real-time fare tracking showing price increases/decreases between searches
 - **Geolocation Integration**: Browser geolocation API for automatic current location detection
 - **Multi-provider Comparison**: Real Uber API integration with mock data for Bolt and Yango
 - **Search Context Persistence**: Search data preserved across authentication and restored after login
 - **Quick Location Access**: Predefined locations (Home, Work, Airport, Central Park) for fast selection
+- **Enhanced UI/UX**: Recommended rides, surge pricing indicators, premium/luxury badges
 - **Responsive Design**: Mobile-first approach with adaptive layouts
 - **Real-time Sorting**: Dynamic sorting by price, time, or service rating
 - **Error Handling**: Comprehensive error states with retry mechanisms
