@@ -39,9 +39,12 @@ This is a full-stack ride comparison application that allows users to compare ri
 ### Key Features
 - **Guest Mode Access**: Users can immediately search for rides without authentication
 - **Smart Authentication Flow**: Login/signup required only when comparing rides, with search data preservation
+- **Search History Management**: Local storage of search history with view, delete individual, and clear all functionality
+- **Text Input Persistence**: Search text remains visible in input fields after authentication
 - **Geolocation Integration**: Browser geolocation API for automatic current location detection
 - **Multi-provider Comparison**: Real Uber API integration with mock data for Bolt and Yango
 - **Search Context Persistence**: Search data preserved across authentication and restored after login
+- **Quick Location Access**: Predefined locations (Home, Work, Airport, Central Park) for fast selection
 - **Responsive Design**: Mobile-first approach with adaptive layouts
 - **Real-time Sorting**: Dynamic sorting by price, time, or service rating
 - **Error Handling**: Comprehensive error states with retry mechanisms

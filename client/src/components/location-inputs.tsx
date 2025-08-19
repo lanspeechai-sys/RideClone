@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowUpDown } from "lucide-react";
@@ -14,6 +14,8 @@ interface LocationInputsProps {
   onSwapLocations: () => void;
   onSearchRides: () => void;
   isLoading: boolean;
+  pickupText?: string;
+  dropoffText?: string;
 }
 
 export function LocationInputs({
@@ -24,10 +26,22 @@ export function LocationInputs({
   onSwapLocations,
   onSearchRides,
   isLoading,
+  pickupText = "",
+  dropoffText = "",
 }: LocationInputsProps) {
-  const [pickupInput, setPickupInput] = useState(pickupLocation?.address || "");
-  const [dropoffInput, setDropoffInput] = useState(dropoffLocation?.address || "");
+  const [pickupInput, setPickupInput] = useState(pickupText || pickupLocation?.address || "");
+  const [dropoffInput, setDropoffInput] = useState(dropoffText || dropoffLocation?.address || "");
   const { toast } = useToast();
+
+  // Update input fields when external text props change (after login)
+  useEffect(() => {
+    if (pickupText && pickupText !== pickupInput) {
+      setPickupInput(pickupText);
+    }
+    if (dropoffText && dropoffText !== dropoffInput) {
+      setDropoffInput(dropoffText);
+    }
+  }, [pickupText, dropoffText]);
 
   const handleGetCurrentLocation = async () => {
     try {

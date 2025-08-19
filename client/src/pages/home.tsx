@@ -10,20 +10,26 @@ import { RecentLocations } from "@/components/recent-locations";
 import { TripSummary } from "@/components/trip-summary";
 import { AppHeader } from "@/components/app-header";
 import { FareTracker } from "@/components/fare-tracker";
+import { SearchHistory } from "@/components/search-history";
+import { QuickActions } from "@/components/quick-actions";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchContext } from "@/contexts/SearchContext";
+import { useSearchHistory } from "@/contexts/SearchHistoryContext";
 import type { TripRequest, RideComparisonResponse, Location } from "@shared/schema";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const { searchData, setSearchData } = useSearchContext();
+  const { addToHistory } = useSearchHistory();
   const [, setLocation] = useLocation();
   
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
   const [dropoffLocation, setDropoffLocation] = useState<Location | null>(null);
+  const [pickupText, setPickupText] = useState<string>("");
+  const [dropoffText, setDropoffText] = useState<string>("");
   const [comparisonData, setComparisonData] = useState<RideComparisonResponse | null>(null);
   const [previousComparisonData, setPreviousComparisonData] = useState<RideComparisonResponse | null>(null);
   const [sortBy, setSortBy] = useState<"price" | "time" | "rating">("price");
@@ -35,6 +41,8 @@ export default function Home() {
     if (isAuthenticated && searchData) {
       setPickupLocation(searchData.pickup);
       setDropoffLocation(searchData.dropoff);
+      setPickupText(searchData.pickup.address);
+      setDropoffText(searchData.dropoff.address);
       
       // Auto-run the comparison if we have saved search data
       compareRidesMutation.mutate(searchData);
@@ -49,9 +57,13 @@ export default function Home() {
       const response = await apiRequest("POST", "/api/rides/compare", request);
       return response.json() as Promise<RideComparisonResponse>;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setPreviousComparisonData(comparisonData);
       setComparisonData(data);
+      
+      // Add to search history
+      addToHistory(variables);
+      
       toast({
         title: "Rides found!",
         description: `Found ${data.estimates.length} ride options`,
@@ -110,18 +122,31 @@ export default function Home() {
   };
 
   const handleSwapLocations = () => {
-    const temp = pickupLocation;
+    const tempLocation = pickupLocation;
+    const tempText = pickupText;
+    
     setPickupLocation(dropoffLocation);
-    setDropoffLocation(temp);
+    setDropoffLocation(tempLocation);
+    setPickupText(dropoffText);
+    setDropoffText(tempText);
   };
 
   const handleQuickLocationSelect = (location: Location, isPickup: boolean = true) => {
     if (isPickup) {
       setPickupLocation(location);
+      setPickupText(location.address);
     } else {
       setDropoffLocation(location);
+      setDropoffText(location.address);
     }
     setShowRecentLocations(false);
+  };
+
+  const handleHistorySelect = (pickup: Location, dropoff: Location) => {
+    setPickupLocation(pickup);
+    setDropoffLocation(dropoff);
+    setPickupText(pickup.address);
+    setDropoffText(dropoff.address);
   };
 
   return (
@@ -137,18 +162,36 @@ export default function Home() {
         <LocationInputs
           pickupLocation={pickupLocation}
           dropoffLocation={dropoffLocation}
+          pickupText={pickupText}
+          dropoffText={dropoffText}
           onPickupChange={(location) => {
             setPickupLocation(location);
-            if (location) setShowRecentLocations(false);
+            if (location) {
+              setPickupText(location.address);
+              setShowRecentLocations(false);
+            }
           }}
           onDropoffChange={(location) => {
             setDropoffLocation(location);
-            if (location) setShowRecentLocations(false);
+            if (location) {
+              setDropoffText(location.address);
+              setShowRecentLocations(false);
+            }
           }}
           onSwapLocations={handleSwapLocations}
           onSearchRides={handleSearchRides}
           isLoading={compareRidesMutation.isPending}
         />
+
+        {/* Search History */}
+        <div className="px-4 mb-4">
+          <SearchHistory onSelectHistory={handleHistorySelect} />
+        </div>
+
+        {/* Quick Actions */}
+        {!comparisonData && !compareRidesMutation.isPending && (
+          <QuickActions onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)} />
+        )}
 
         {/* Recent Locations */}
         {showRecentLocations && !comparisonData && (
