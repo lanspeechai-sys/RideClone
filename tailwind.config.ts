@@ -98,3 +98,22 @@ export default {
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;
+
+
+
+
+// tailwind.config.js
+module.exports = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,html}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#3B82F6', // or your preferred base color
+          90: '#3B82F6E6'     // 90% opacity (optional if using '/90' syntax)
+        },
+      },
+    },
+  },
+  plugins: [],
+}
