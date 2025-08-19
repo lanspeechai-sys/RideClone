@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUpdateProfile, useLogout } from "@/hooks/useAuth";
 import { userProfileUpdateSchema, type UserProfileUpdate } from "@shared/schema";
-import { User, Settings, LogOut, Save, Phone, Calendar } from "lucide-react";
+import { User, Settings, LogOut, Save, Phone, Calendar, ArrowLeft } from "lucide-react";
 
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const updateProfileMutation = useUpdateProfile();
   const logoutMutation = useLogout();
+  const [, setLocation] = useLocation();
 
   const form = useForm<UserProfileUpdate>({
     resolver: zodResolver(userProfileUpdateSchema),
@@ -53,6 +55,8 @@ export default function Profile() {
         title: "Logged out",
         description: "You've been logged out successfully.",
       });
+      // Redirect to login page after successful logout
+      setLocation("/login");
     } catch (error: any) {
       toast({
         title: "Logout failed",
@@ -60,6 +64,10 @@ export default function Profile() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleBack = () => {
+    setLocation("/");
   };
 
   if (!user) {
@@ -251,6 +259,17 @@ export default function Profile() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-semibold"
+                    onClick={handleBack}
+                    data-testid="button-back"
+                  >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Back to Home
+                  </Button>
+
+                  <Button
                     type="submit"
                     className="flex-1 h-12 gradient-primary text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                     disabled={updateProfileMutation.isPending}
@@ -263,7 +282,7 @@ export default function Profile() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1 h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-semibold"
+                    className="h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-semibold"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                     data-testid="button-logout"

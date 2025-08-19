@@ -9,6 +9,7 @@ This is a full-stack ride comparison application that allows users to compare ri
 - Preferred communication style: Simple, everyday language
 - Design preference: Vibrant, modern colors instead of black and white interface
 - Authentication: Login/signup pages with demo credentials and profile editing functionality
+- Profile navigation: Users requested back button and logout redirect to login page
 
 ## System Architecture
 
