@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingModal } from "./booking-modal";
 import { PriceAlerts } from "./price-alerts";
-import { ArrowUpDown, Clock, MapPin, Star, DollarSign } from "lucide-react";
+import { ArrowUpDown, Clock, MapPin, Star, DollarSign, Zap, Crown } from "lucide-react";
 import type { RideEstimate, Location } from "@shared/schema";
 import { useCountry } from "@/contexts/CountryContext";
 
@@ -20,6 +20,7 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
   const [selectedRide, setSelectedRide] = useState<RideEstimate | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { formatPrice } = useCountry();
+  
   const sortedEstimates = [...estimates].sort((a, b) => {
     switch (sortBy) {
       case "price":
@@ -27,19 +28,34 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
       case "time":
         return parseInt(a.arrivalTime) - parseInt(b.arrivalTime);
       case "rating":
-        return a.category === "premium" ? -1 : 1;
+        return (b.rating || 0) - (a.rating || 0);
       default:
         return 0;
     }
   });
 
-  const getProviderLogo = (provider: string) => {
-    const logos = {
-      uber: { bg: "bg-black", text: "UBER" },
-      bolt: { bg: "bg-green-600", text: "BOLT" },
-      yango: { bg: "bg-yellow-500", text: "YANGO" },
+  const getProviderInfo = (provider: string) => {
+    const providers = {
+      uber: { 
+        name: "UBER", 
+        bg: "bg-black", 
+        color: "text-black",
+        accent: "border-black/20 hover:border-black/40"
+      },
+      bolt: { 
+        name: "BOLT", 
+        bg: "bg-green-600", 
+        color: "text-green-600",
+        accent: "border-green-200 hover:border-green-400"
+      },
+      yango: { 
+        name: "YANGO", 
+        bg: "bg-yellow-500", 
+        color: "text-yellow-600",
+        accent: "border-yellow-200 hover:border-yellow-400"
+      },
     };
-    return logos[provider as keyof typeof logos] || { bg: "bg-gray-600", text: provider.toUpperCase() };
+    return providers[provider as keyof typeof providers] || providers.uber;
   };
 
   const handleBookRide = (ride: RideEstimate) => {
@@ -48,99 +64,164 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
   };
 
   const lowestPrice = Math.min(...estimates.map(e => e.price));
-  const highestPrice = Math.max(...estimates.map(e => e.price));
 
   return (
-    <>
-      <section className="mt-4 px-4">
-        <h3 className="text-lg font-semibold text-primary mb-4">Available Rides</h3>
-        
-        <div className="space-y-3">
-          {sortedEstimates.map((ride) => {
-            const logo = getProviderLogo(ride.provider);
-            const isLowestPrice = ride.price === lowestPrice;
-            
-            return (
-              <div
-                key={ride.id}
-                className={`bg-white rounded-xl p-4 shadow-sm border transition-all duration-200 ${
-                  isLowestPrice 
-                    ? "border-green-200 bg-green-50 ring-2 ring-green-100" 
-                    : "border-gray-100 hover:shadow-md cursor-pointer"
-                }`}
-                data-testid={`card-ride-${ride.id}`}
-              >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-2xl font-bold text-foreground">Available Rides</h3>
+          <p className="text-muted-foreground">Choose the best option for your trip</p>
+        </div>
+        <Badge variant="secondary" className="text-sm">
+          {estimates.length} options
+        </Badge>
+      </div>
+
+      {/* Sort Controls */}
+      <Card className="card-modern">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={sortBy === "price" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSortChange("price")}
+              className="font-medium"
+              data-testid="button-filter-price"
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Best Price
+            </Button>
+            <Button
+              variant={sortBy === "time" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSortChange("time")}
+              className="font-medium"
+              data-testid="button-filter-time"
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              Fastest
+            </Button>
+            <Button
+              variant={sortBy === "rating" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onSortChange("rating")}
+              className="font-medium"
+              data-testid="button-filter-rating"
+            >
+              <Star className="mr-2 h-4 w-4" />
+              Top Rated
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ride Options */}
+      <div className="space-y-4">
+        {sortedEstimates.map((ride, index) => {
+          const providerInfo = getProviderInfo(ride.provider);
+          const isLowestPrice = ride.price === lowestPrice;
+          const isRecommended = index === 0 && sortBy === "price";
+          
+          return (
+            <Card
+              key={ride.id}
+              className={`card-modern transition-all duration-200 hover:shadow-lg ${
+                isLowestPrice 
+                  ? "ring-2 ring-green-500/20 bg-green-50/50 border-green-200" 
+                  : "hover:border-primary/30"
+              }`}
+              data-testid={`card-ride-${ride.id}`}
+            >
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 ${logo.bg} rounded-lg flex items-center justify-center`}>
-                      <span className="text-white font-bold text-xs">{logo.text}</span>
+                  <div className="flex items-center space-x-4 flex-1">
+                    {/* Provider Logo */}
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${providerInfo.bg} shadow-md`}>
+                      <span className="text-white font-bold text-xs">{providerInfo.name[0]}</span>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-primary" data-testid={`text-service-${ride.id}`}>
-                        {ride.serviceName}
-                      </h4>
-                      <p className="text-sm text-gray-600" data-testid={`text-description-${ride.id}`}>
-                        {ride.description}
-                      </p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className="text-xs text-gray-500" data-testid={`text-arrival-${ride.id}`}>
-                          {ride.arrivalTime}
-                        </span>
-                        <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-500" data-testid={`text-capacity-${ride.id}`}>
-                          {ride.capacity} seats
-                        </span>
-                        {ride.rating && (
-                          <>
-                            <span className="text-xs text-gray-400">•</span>
-                            <span className="text-xs text-yellow-600 font-medium" data-testid={`text-rating-${ride.id}`}>
-                              ⭐ {ride.rating.toFixed(1)}
-                            </span>
-                          </>
+
+                    {/* Ride Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-semibold text-foreground text-lg" data-testid={`text-service-${ride.id}`}>
+                          {ride.serviceName}
+                        </h4>
+                        {isRecommended && (
+                          <Badge className="bg-primary text-primary-foreground">
+                            Recommended
+                          </Badge>
                         )}
                         {ride.category === "premium" && (
-                          <>
-                            <span className="text-xs text-gray-400">•</span>
-                            <Badge className="bg-purple-100 text-purple-800 text-xs">Premium</Badge>
-                          </>
+                          <Badge variant="outline" className="border-purple-200 text-purple-700">
+                            <Crown className="mr-1 h-3 w-3" />
+                            Premium
+                          </Badge>
                         )}
-                        {ride.surge && ride.surge > 1 && (
-                          <>
-                            <span className="text-xs text-gray-400">•</span>
-                            <Badge variant="destructive" className="text-xs">
-                              {ride.surge.toFixed(1)}x Surge
-                            </Badge>
-                          </>
+                        {ride.category === "luxury" && (
+                          <Badge variant="outline" className="border-yellow-200 text-yellow-700">
+                            <Crown className="mr-1 h-3 w-3" />
+                            Luxury
+                          </Badge>
                         )}
                       </div>
-                      {ride.surge && ride.surge > 1.0 && (
-                        <div className="mt-2 inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
-                          🔥 {ride.surge.toFixed(1)}x surge pricing
+                      
+                      <p className="text-muted-foreground mb-2" data-testid={`text-description-${ride.id}`}>
+                        {ride.description}
+                      </p>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Clock className="h-4 w-4" />
+                          <span data-testid={`text-arrival-${ride.id}`}>{ride.arrivalTime}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="h-4 w-4" />
+                          <span data-testid={`text-capacity-${ride.id}`}>{ride.capacity} seats</span>
+                        </div>
+                        {ride.rating && (
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium" data-testid={`text-rating-${ride.id}`}>
+                              {ride.rating.toFixed(1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {ride.surge && ride.surge > 1 && (
+                        <div className="mt-2">
+                          <Badge variant="destructive" className="text-xs">
+                            <Zap className="mr-1 h-3 w-3" />
+                            {ride.surge.toFixed(1)}x Surge Pricing
+                          </Badge>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="text-right space-y-2">
-                    <div className="space-y-1">
-                      <div className={`text-lg font-bold ${isLowestPrice ? "text-green-700" : "text-primary"}`} data-testid={`text-price-${ride.id}`}>
+
+                  {/* Price and Action */}
+                  <div className="text-right space-y-3 ml-4">
+                    <div>
+                      <div className={`text-2xl font-bold ${isLowestPrice ? "text-green-600" : "text-foreground"}`} data-testid={`text-price-${ride.id}`}>
                         {formatPrice(ride.price)}
                         {isLowestPrice && (
-                          <span className="ml-1 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full">
-                            BEST
-                          </span>
+                          <Badge className="ml-2 bg-green-600 text-white text-xs">
+                            BEST PRICE
+                          </Badge>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500" data-testid={`text-price-range-${ride.id}`}>
+                      <div className="text-sm text-muted-foreground" data-testid={`text-price-range-${ride.id}`}>
                         {ride.priceRange}
                       </div>
                     </div>
+                    
                     <Button
-                      size="sm"
                       onClick={() => handleBookRide(ride)}
-                      className={`w-full text-xs py-2 ${
+                      className={`w-full font-semibold ${
                         isLowestPrice 
-                          ? "bg-green-600 hover:bg-green-700 text-white" 
-                          : "bg-primary hover:bg-primary/90 text-white"
+                          ? "bg-green-600 hover:bg-green-700 text-white shadow-md" 
+                          : "btn-primary"
                       }`}
                       data-testid={`button-book-${ride.id}`}
                     >
@@ -148,50 +229,14 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
                     </Button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-      {/* Price Filters */}
-      <section className="mt-6 px-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <h4 className="font-semibold text-primary mb-3">Filter Options</h4>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={sortBy === "price" ? "default" : "secondary"}
-              size="sm"
-              onClick={() => onSortChange("price")}
-              className="px-3 py-2 rounded-full text-sm font-medium"
-              data-testid="button-filter-price"
-            >
-              Price: Low to High
-            </Button>
-            <Button
-              variant={sortBy === "time" ? "default" : "secondary"}
-              size="sm"
-              onClick={() => onSortChange("time")}
-              className="px-3 py-2 rounded-full text-sm font-medium"
-              data-testid="button-filter-time"
-            >
-              Fastest First
-            </Button>
-            <Button
-              variant={sortBy === "rating" ? "default" : "secondary"}
-              size="sm"
-              onClick={() => onSortChange("rating")}
-              className="px-3 py-2 rounded-full text-sm font-medium"
-              data-testid="button-filter-rating"
-            >
-              Highly Rated
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Price Alerts Section */}
-      <section className="mt-6 px-4">
+      {/* Price Alerts */}
+      <div className="flex justify-center">
         <PriceAlerts 
           pickup={pickup}
           dropoff={dropoff}
@@ -199,7 +244,7 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
           service={sortedEstimates[0]?.provider}
           vehicleType={sortedEstimates[0]?.serviceName}
         />
-      </section>
+      </div>
 
       {/* Booking Modal */}
       <BookingModal
@@ -209,6 +254,6 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
         pickup={pickup}
         dropoff={dropoff}
       />
-    </>
+    </div>
   );
 }

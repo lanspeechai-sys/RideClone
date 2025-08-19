@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLogin } from "@/hooks/useAuth";
 import { useSearchContext } from "@/contexts/SearchContext";
 import { userLoginSchema, type UserLogin } from "@shared/schema";
-import { Eye, EyeOff, Sparkles, Zap } from "lucide-react";
+import { Eye, EyeOff, LogIn, Zap } from "lucide-react";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,24 +52,24 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-cyan-50 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-page p-4">
+      <div className="w-full max-w-md animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 gradient-primary rounded-2xl shadow-lg">
-            <Sparkles className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-primary rounded-2xl shadow-lg">
+            <LogIn className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-foreground">
             Welcome Back!
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             Sign in to compare rides and save money
           </p>
         </div>
 
-        <Card className="glass-effect border-0 shadow-xl">
+        <Card className="card-elevated">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold text-primary">
+            <CardTitle className="text-2xl font-bold text-foreground">
               Sign In
             </CardTitle>
             <CardDescription className="text-base">
@@ -102,11 +102,11 @@ export default function Login() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold">Username</FormLabel>
+                      <FormLabel className="text-foreground font-semibold">Username</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter your username"
-                          className="h-12 border-2 focus:border-primary focus:ring-primary/20"
+                          className="input-modern h-12"
                           data-testid="input-username"
                           {...field}
                         />
@@ -121,13 +121,13 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold">Password</FormLabel>
+                      <FormLabel className="text-foreground font-semibold">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
-                            className="h-12 border-2 focus:border-primary focus:ring-primary/20 pr-12"
+                            className="input-modern h-12 pr-12"
                             data-testid="input-password"
                             {...field}
                           />
@@ -140,9 +140,9 @@ export default function Login() {
                             data-testid="button-toggle-password"
                           >
                             {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-500" />
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
                             ) : (
-                              <Eye className="h-4 w-4 text-gray-500" />
+                              <Eye className="h-4 w-4 text-muted-foreground" />
                             )}
                           </Button>
                         </div>
@@ -154,17 +154,24 @@ export default function Login() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 gradient-primary text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  className="btn-primary w-full h-12 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                   disabled={loginMutation.isPending}
                   data-testid="button-login"
                 >
-                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                  {loginMutation.isPending ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                      <span>Signing in...</span>
+                    </div>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
             </Form>
 
             <div className="mt-6 text-center">
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Don't have an account?{" "}
                 <Link href="/signup">
                   <Button variant="link" className="p-0 h-auto text-primary font-semibold hover:text-primary/80">

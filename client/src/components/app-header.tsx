@@ -1,4 +1,4 @@
-import { Menu, Settings, Bell, User } from "lucide-react";
+import { Menu, Settings, Bell, User, Home, Info, Mail, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
@@ -10,7 +10,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface AppHeaderProps {
   title: string;
@@ -21,7 +30,7 @@ interface AppHeaderProps {
 export function AppHeader({ title, onMenuClick, showNotifications = false }: AppHeaderProps) {
   const { user } = useAuth();
   const logoutMutation = useLogout();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const handleProfileClick = () => {
     setLocation("/profile");
@@ -31,17 +40,53 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
     await logoutMutation.mutateAsync();
   };
 
+  const navigationItems = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/about", label: "About", icon: Info },
+    { href: "/contact", label: "Contact", icon: Mail },
+    { href: "/pricing", label: "Pricing", icon: DollarSign },
+  ];
+
   return (
-    <header className="glass-effect border-b-0 sticky top-0 z-50 shadow-lg">
-      <div className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-sm">R</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="container-modern">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo and Brand */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary shadow-md">
+                <span className="text-lg font-bold text-white">R</span>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold text-foreground">{title}</h1>
+                <p className="text-xs text-muted-foreground">Compare rides, save money</p>
+              </div>
             </div>
-            <h1 className="text-xl font-bold text-primary">{title}</h1>
           </div>
-          
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1">
+            <NavigationMenu>
+              <NavigationMenuList>
+                {navigationItems.map((item) => (
+                  <NavigationMenuItem key={item.href}>
+                    <NavigationMenuLink
+                      className={cn(
+                        "group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+                        location === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                      )}
+                      onClick={() => setLocation(item.href)}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+
+          {/* Right Side Actions */}
           <div className="flex items-center space-x-3">
             <CountrySelector />
             
@@ -49,11 +94,11 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full hover:bg-white/20 relative"
+                className="relative h-10 w-10 rounded-full hover:bg-accent"
                 data-testid="button-notifications"
               >
-                <Bell className="w-5 h-5 text-primary" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-400 to-pink-500 rounded-full text-xs shadow-sm"></span>
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive shadow-sm"></span>
               </Button>
             )}
             
@@ -62,20 +107,20 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="rounded-full hover:bg-white/20 h-10 w-10 p-0"
+                    className="relative h-10 w-10 rounded-full hover:bg-accent"
                     data-testid="button-user-menu"
                   >
-                    <Avatar className="w-8 h-8 border-2 border-white shadow-sm">
+                    <Avatar className="h-9 w-9 border-2 border-border">
                       <AvatarImage src={user.profileImageUrl || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-sm font-bold">
+                      <AvatarFallback className="bg-gradient-primary text-white text-sm font-semibold">
                         {user.firstName?.[0]}{user.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 glass-effect border-0 shadow-xl">
+                <DropdownMenuContent align="end" className="w-56 card-modern">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-semibold text-primary">
+                    <p className="text-sm font-semibold text-foreground">
                       {user.firstName} {user.lastName}
                     </p>
                     <p className="text-xs text-muted-foreground">@{user.username}</p>
@@ -83,19 +128,19 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleProfileClick}
-                    className="cursor-pointer hover:bg-primary/10"
+                    className="cursor-pointer focus:bg-accent"
                     data-testid="menu-profile"
                   >
-                    <User className="w-4 h-4 mr-2" />
+                    <User className="mr-2 h-4 w-4" />
                     Profile Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleLogout}
-                    className="cursor-pointer text-red-600 hover:bg-red-50 focus:bg-red-50"
+                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
                     data-testid="menu-logout"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -106,56 +151,64 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="rounded-full hover:bg-white/20"
+                    className="h-10 w-10 rounded-full hover:bg-accent md:hidden"
                     data-testid="button-menu"
                   >
-                    <Menu className="w-6 h-6 text-primary" />
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 glass-effect border-0 shadow-xl">
+                <DropdownMenuContent align="end" className="w-56 card-modern">
+                  {/* Mobile Navigation */}
+                  {navigationItems.map((item) => (
+                    <DropdownMenuItem 
+                      key={item.href}
+                      onClick={() => setLocation(item.href)}
+                      className="cursor-pointer focus:bg-accent md:hidden"
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator className="md:hidden" />
                   <DropdownMenuItem 
                     onClick={() => setLocation("/login")}
-                    className="cursor-pointer hover:bg-primary/10"
+                    className="cursor-pointer focus:bg-accent"
                     data-testid="menu-login"
                   >
-                    <User className="w-4 h-4 mr-2" />
+                    <User className="mr-2 h-4 w-4" />
                     Login
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setLocation("/signup")}
-                    className="cursor-pointer hover:bg-primary/10"
+                    className="cursor-pointer focus:bg-accent"
                     data-testid="menu-signup"
                   >
-                    <User className="w-4 h-4 mr-2" />
+                    <User className="mr-2 h-4 w-4" />
                     Sign Up
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/about")}
-                    className="cursor-pointer hover:bg-primary/10"
-                    data-testid="menu-about"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    About Us
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/contact")}
-                    className="cursor-pointer hover:bg-primary/10"
-                    data-testid="menu-contact"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Contact Us
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/pricing")}
-                    className="cursor-pointer hover:bg-primary/10"
-                    data-testid="menu-pricing"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Pricing
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+
+            {/* Desktop Auth Buttons */}
+            {!user && (
+              <div className="hidden md:flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setLocation("/login")}
+                  className="font-medium"
+                  data-testid="button-login-desktop"
+                >
+                  Login
+                </Button>
+                <Button 
+                  onClick={() => setLocation("/signup")}
+                  className="btn-primary font-medium"
+                  data-testid="button-signup-desktop"
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
           </div>
         </div>

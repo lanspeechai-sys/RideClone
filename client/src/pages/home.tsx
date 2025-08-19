@@ -158,7 +158,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-cyan-50 font-inter">
+    <div className="min-h-screen bg-gradient-page font-sans">
       {/* Header */}
       <AppHeader 
         title="RideCompare" 
@@ -166,99 +166,165 @@ export default function Home() {
       />
 
       <main className="pb-20">
+        {/* Hero Section */}
+        {!comparisonData && (
+          <section className="section-padding bg-gradient-to-br from-primary/5 via-blue-50/50 to-indigo-50/30">
+            <div className="container-modern text-center">
+              <div className="mx-auto max-w-3xl animate-fade-in">
+                <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                  Find the <span className="text-gradient">Best Ride</span> at the Best Price
+                </h1>
+                <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
+                  Compare prices across Uber, Bolt, and Yango in real-time. Save money on every trip with smart price tracking and instant comparisons.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Location Inputs */}
-        <LocationInputs
-          pickupLocation={pickupLocation}
-          dropoffLocation={dropoffLocation}
-          pickupText={pickupText}
-          dropoffText={dropoffText}
-          onPickupChange={(location) => {
-            setPickupLocation(location);
-            if (location) {
-              setPickupText(location.address);
-              setShowRecentLocations(false);
-            }
-          }}
-          onDropoffChange={(location) => {
-            setDropoffLocation(location);
-            if (location) {
-              setDropoffText(location.address);
-              setShowRecentLocations(false);
-            }
-          }}
-          onSwapLocations={handleSwapLocations}
-          onSearchRides={handleSearchRides}
-          isLoading={compareRidesMutation.isPending}
-        />
+        <section className={comparisonData ? "bg-background border-b" : ""}>
+          <div className="container-modern">
+            <div className={comparisonData ? "py-6" : "-mt-8"}>
+              <div className="mx-auto max-w-2xl">
+                <LocationInputs
+                  pickupLocation={pickupLocation}
+                  dropoffLocation={dropoffLocation}
+                  pickupText={pickupText}
+                  dropoffText={dropoffText}
+                  onPickupChange={(location) => {
+                    setPickupLocation(location);
+                    if (location) {
+                      setPickupText(location.address);
+                      setShowRecentLocations(false);
+                    }
+                  }}
+                  onDropoffChange={(location) => {
+                    setDropoffLocation(location);
+                    if (location) {
+                      setDropoffText(location.address);
+                      setShowRecentLocations(false);
+                    }
+                  }}
+                  onSwapLocations={handleSwapLocations}
+                  onSearchRides={handleSearchRides}
+                  isLoading={compareRidesMutation.isPending}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Search History */}
-        <div className="px-4 mb-4">
-          <SearchHistory onSelectHistory={handleHistorySelect} />
-        </div>
+        {!comparisonData && (
+          <section className="py-6">
+            <div className="container-modern">
+              <div className="mx-auto max-w-2xl">
+                <SearchHistory onSelectHistory={handleHistorySelect} />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Quick Actions */}
         {!comparisonData && !compareRidesMutation.isPending && (
-          <QuickActions onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)} />
+          <section className="py-6">
+            <div className="container-modern">
+              <div className="mx-auto max-w-4xl">
+                <QuickActions onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)} />
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Recent Locations */}
         {showRecentLocations && !comparisonData && (
-          <div className="px-4">
-            <RecentLocations 
-              onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)}
-            />
-          </div>
+          <section className="py-6">
+            <div className="container-modern">
+              <div className="mx-auto max-w-2xl">
+                <RecentLocations 
+                  onLocationSelect={(location) => handleQuickLocationSelect(location, !pickupLocation)}
+                />
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Trip Summary */}
         {comparisonData && (
-          <div className="px-4">
-            <TripSummary data={comparisonData} />
-          </div>
+          <section className="py-6 bg-muted/30">
+            <div className="container-modern">
+              <div className="mx-auto max-w-4xl">
+                <TripSummary data={comparisonData} />
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Fare Tracker */}
         {comparisonData && previousComparisonData && (
-          <FareTracker 
-            currentEstimates={comparisonData.estimates}
-            previousEstimates={previousComparisonData.estimates}
-          />
+          <section className="py-6">
+            <div className="container-modern">
+              <div className="mx-auto max-w-4xl">
+                <FareTracker 
+                  currentEstimates={comparisonData.estimates}
+                  previousEstimates={previousComparisonData.estimates}
+                />
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Loading State */}
-        {compareRidesMutation.isPending && <LoadingState />}
+        {compareRidesMutation.isPending && (
+          <section className="py-12">
+            <div className="container-modern">
+              <LoadingState />
+            </div>
+          </section>
+        )}
 
         {/* Error State */}
         {compareRidesMutation.isError && (
-          <ErrorState 
-            error={compareRidesMutation.error}
-            onRetry={handleRefresh}
-          />
+          <section className="py-12">
+            <div className="container-modern">
+              <ErrorState 
+                error={compareRidesMutation.error}
+                onRetry={handleRefresh}
+              />
+            </div>
+          </section>
         )}
 
         {/* Ride Comparison */}
         {comparisonData && !compareRidesMutation.isPending && (
-          <RideComparison 
-            estimates={comparisonData.estimates}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            pickup={pickupLocation}
-            dropoff={dropoffLocation}
-          />
+          <section className="py-6">
+            <div className="container-modern">
+              <div className="mx-auto max-w-4xl">
+                <RideComparison 
+                  estimates={comparisonData.estimates}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  pickup={pickupLocation}
+                  dropoff={dropoffLocation}
+                />
+              </div>
+            </div>
+          </section>
         )}
       </main>
 
       {/* Floating Action Button */}
       {comparisonData && (
-        <div className="fixed bottom-6 right-4">
+        <div className="fixed bottom-6 right-6 z-40">
           <Button
             onClick={handleRefresh}
             disabled={compareRidesMutation.isPending}
             size="lg"
-            className="bg-accent hover:bg-accent/90 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            className="h-14 w-14 rounded-full bg-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 shadow-glow"
             data-testid="button-refresh"
           >
-            <RefreshCw className="w-6 h-6" />
+            <RefreshCw className="h-6 w-6" />
           </Button>
         </div>
       )}

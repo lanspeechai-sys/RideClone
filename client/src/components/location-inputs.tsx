@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowUpDown } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin, ArrowUpDown, Navigation } from "lucide-react";
 import { getCurrentLocation } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import type { Location } from "@shared/schema";
@@ -99,76 +100,95 @@ export function LocationInputs({
   };
 
   return (
-    <section className="bg-white shadow-sm">
-      <div className="p-4 space-y-4">
-        <h2 className="text-lg font-semibold text-primary mb-4">Where to?</h2>
-        
-        {/* Pickup Location */}
-        <div className="relative">
-          <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-accent rounded-full flex-shrink-0"></div>
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Pickup location"
-                value={pickupInput}
-                onChange={(e) => handlePickupInputChange(e.target.value)}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent text-sm"
-                data-testid="input-pickup"
-              />
+    <Card className="card-elevated animate-scale-in">
+      <CardContent className="p-6">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Where to?</h2>
+            <p className="text-muted-foreground">Enter your pickup and destination to compare rides</p>
+          </div>
+          
+          {/* Pickup Location */}
+          <div className="relative">
+            <div className="flex items-center space-x-4">
+              <div className="flex h-4 w-4 items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-green-500 shadow-sm"></div>
+              </div>
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Pickup location"
+                  value={pickupInput}
+                  onChange={(e) => handlePickupInputChange(e.target.value)}
+                  className="input-modern h-12 text-base"
+                  data-testid="input-pickup"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleGetCurrentLocation}
+                className="h-12 w-12 rounded-xl border-2 hover:bg-accent"
+                data-testid="button-current-location"
+              >
+                <Navigation className="h-5 w-5" />
+              </Button>
             </div>
+          </div>
+
+          {/* Swap Button */}
+          <div className="flex justify-center">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
-              onClick={handleGetCurrentLocation}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-              data-testid="button-current-location"
+              onClick={onSwapLocations}
+              className="h-10 w-10 rounded-full border-2 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105"
+              data-testid="button-swap-locations"
             >
-              <MapPin className="w-5 h-5 text-gray-600" />
+              <ArrowUpDown className="h-4 w-4" />
             </Button>
           </div>
-        </div>
 
-        {/* Swap Button */}
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onSwapLocations}
-            className="p-2 bg-white border-2 border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all duration-200"
-            data-testid="button-swap-locations"
-          >
-            <ArrowUpDown className="w-4 h-4 text-gray-600" />
-          </Button>
-        </div>
-
-        {/* Drop-off Location */}
-        <div className="relative">
-          <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0"></div>
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Where to?"
-                value={dropoffInput}
-                onChange={(e) => handleDropoffInputChange(e.target.value)}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent text-sm"
-                data-testid="input-dropoff"
-              />
+          {/* Drop-off Location */}
+          <div className="relative">
+            <div className="flex items-center space-x-4">
+              <div className="flex h-4 w-4 items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-red-500 shadow-sm"></div>
+              </div>
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Where to?"
+                  value={dropoffInput}
+                  onChange={(e) => handleDropoffInputChange(e.target.value)}
+                  className="input-modern h-12 text-base"
+                  data-testid="input-dropoff"
+                />
+              </div>
+              <div className="h-12 w-12 flex items-center justify-center">
+                <MapPin className="h-5 w-5 text-muted-foreground" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Search Button */}
-        <Button
-          onClick={onSearchRides}
-          disabled={isLoading || !pickupLocation || !dropoffLocation}
-          className="w-full bg-primary text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50"
-          data-testid="button-compare-rides"
-        >
-          {isLoading ? "Searching..." : "Compare Rides"}
-        </Button>
-      </div>
-    </section>
+          {/* Search Button */}
+          <Button
+            onClick={onSearchRides}
+            disabled={isLoading || !pickupLocation || !dropoffLocation}
+            className="btn-primary w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+            data-testid="button-compare-rides"
+          >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                <span>Searching...</span>
+              </div>
+            ) : (
+              "Compare Rides"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -12,7 +12,7 @@ import { useSearchContext } from "@/contexts/SearchContext";
 import { userSignupSchema, type UserSignup } from "@shared/schema";
 import { useCountry, COUNTRIES, type Country } from "@/contexts/CountryContext";
 import { checkLocationPermission, getCurrentLocation } from "@/lib/geolocation";
-import { Eye, EyeOff, UserPlus, Sparkles, Globe, MapPin } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Globe, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Signup() {
@@ -91,24 +91,24 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-purple-50 to-cyan-50 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-page p-4">
+      <div className="w-full max-w-md animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 gradient-secondary rounded-2xl shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-primary rounded-2xl shadow-lg">
             <UserPlus className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-foreground">
             Join RideCompare
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             Create your account to start comparing rides
           </p>
         </div>
 
-        <Card className="glass-effect border-0 shadow-xl">
+        <Card className="card-elevated">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold text-primary">
+            <CardTitle className="text-2xl font-bold text-foreground">
               Create Account
             </CardTitle>
             <CardDescription className="text-base">
@@ -125,11 +125,11 @@ export default function Signup() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary font-semibold">First Name</FormLabel>
+                        <FormLabel className="text-foreground font-semibold">First Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="John"
-                            className="h-11 border-2 focus:border-primary focus:ring-primary/20"
+                            className="input-modern h-11"
                             data-testid="input-first-name"
                             {...field}
                           />
@@ -144,11 +144,11 @@ export default function Signup() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary font-semibold">Last Name</FormLabel>
+                        <FormLabel className="text-foreground font-semibold">Last Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Doe"
-                            className="h-11 border-2 focus:border-primary focus:ring-primary/20"
+                            className="input-modern h-11"
                             data-testid="input-last-name"
                             {...field}
                           />
@@ -164,11 +164,11 @@ export default function Signup() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold">Username</FormLabel>
+                      <FormLabel className="text-foreground font-semibold">Username</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="johndoe"
-                          className="h-11 border-2 focus:border-primary focus:ring-primary/20"
+                          className="input-modern h-11"
                           data-testid="input-username"
                           {...field}
                         />
@@ -183,12 +183,12 @@ export default function Signup() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold">Email</FormLabel>
+                      <FormLabel className="text-foreground font-semibold">Email</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
                           placeholder="john@example.com"
-                          className="h-11 border-2 focus:border-primary focus:ring-primary/20"
+                          className="input-modern h-11"
                           data-testid="input-email"
                           {...field}
                         />
@@ -203,13 +203,13 @@ export default function Signup() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold">Password</FormLabel>
+                      <FormLabel className="text-foreground font-semibold">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Create a secure password"
-                            className="h-11 border-2 focus:border-primary focus:ring-primary/20 pr-12"
+                            className="input-modern h-11 pr-12"
                             data-testid="input-password"
                             {...field}
                           />
@@ -222,9 +222,9 @@ export default function Signup() {
                             data-testid="button-toggle-password"
                           >
                             {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-500" />
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
                             ) : (
-                              <Eye className="h-4 w-4 text-gray-500" />
+                              <Eye className="h-4 w-4 text-muted-foreground" />
                             )}
                           </Button>
                         </div>
@@ -240,13 +240,13 @@ export default function Signup() {
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary font-semibold flex items-center">
+                      <FormLabel className="text-foreground font-semibold flex items-center">
                         <Globe className="w-4 h-4 mr-2" />
                         Country/Region
                       </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-country">
                         <FormControl>
-                          <SelectTrigger className="h-11 border-2 focus:border-primary focus:ring-primary/20">
+                          <SelectTrigger className="input-modern h-11">
                             <SelectValue placeholder="Select your country">
                               {field.value && (
                                 <div className="flex items-center gap-2">
@@ -257,13 +257,13 @@ export default function Signup() {
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="card-modern">
                           {COUNTRIES.map((country) => (
                             <SelectItem key={country.code} value={country.code} data-testid={`option-${country.code}`}>
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">{country.flag}</span>
                                 <span>{country.name}</span>
-                                <span className="text-gray-500">({country.currency})</span>
+                                <span className="text-muted-foreground">({country.currency})</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -275,42 +275,53 @@ export default function Signup() {
                 />
 
                 {/* Location Permission */}
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-2 border-blue-100">
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-blue-900">Enable Location Access</p>
-                      <p className="text-sm text-blue-700">
-                        Get better ride estimates and automatic location detection
-                      </p>
+                <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start space-x-3">
+                        <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-blue-900">Enable Location Access</p>
+                          <p className="text-sm text-blue-700">
+                            Get better ride estimates and automatic location detection
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGetLocation}
+                        disabled={isGettingLocation}
+                        className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                        data-testid="button-location-permission"
+                      >
+                        {isGettingLocation ? "Getting..." : "Allow"}
+                      </Button>
                     </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGetLocation}
-                    disabled={isGettingLocation}
-                    className="border-blue-200 text-blue-700 hover:bg-blue-100"
-                    data-testid="button-location-permission"
-                  >
-                    {isGettingLocation ? "Getting..." : "Allow"}
-                  </Button>
-                </div>
+                  </CardContent>
+                </Card>
 
                 <Button
                   type="submit"
-                  className="w-full h-12 gradient-secondary text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  className="btn-primary w-full h-12 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                   disabled={signupMutation.isPending}
                   data-testid="button-signup"
                 >
-                  {signupMutation.isPending ? "Creating Account..." : "Create Account"}
+                  {signupMutation.isPending ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                      <span>Creating Account...</span>
+                    </div>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
             </Form>
 
             <div className="mt-6 text-center">
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/login">
                   <Button variant="link" className="p-0 h-auto text-primary font-semibold hover:text-primary/80">

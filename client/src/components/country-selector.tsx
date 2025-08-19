@@ -33,18 +33,18 @@ export function CountrySelector() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between bg-white/10 border-white/20 text-white hover:bg-white/20"
+          className="w-[180px] justify-between border-2 hover:border-primary/40 transition-colors"
           data-testid="button-country-selector"
         >
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
+          <div className="flex items-center gap-2 min-w-0">
+            <Globe className="h-4 w-4 text-muted-foreground" />
             <span className="text-lg">{selectedCountry.flag}</span>
-            <span className="truncate">{selectedCountry.name}</span>
+            <span className="truncate font-medium">{selectedCountry.name}</span>
           </div>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" data-testid="popover-country-list">
+      <PopoverContent className="w-[320px] p-0 card-modern" data-testid="popover-country-list">
         <Command>
           <CommandInput 
             placeholder="Search countries..." 
@@ -59,13 +59,13 @@ export function CountrySelector() {
                   key={country.code}
                   value={`${country.name} ${country.code}`}
                   onSelect={() => onCountrySelect(country)}
-                  className="flex items-center justify-between cursor-pointer"
+                  className="flex items-center justify-between cursor-pointer p-3 hover:bg-accent"
                   data-testid={`item-country-${country.code.toLowerCase()}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{country.flag}</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">{country.name}</span>
+                      <span className="font-medium text-foreground">{country.name}</span>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{country.currencySymbol} {country.currency}</span>
                         <span>•</span>
@@ -75,7 +75,7 @@ export function CountrySelector() {
                   </div>
                   <Check
                     className={cn(
-                      "ml-auto h-4 w-4",
+                      "ml-auto h-4 w-4 text-primary",
                       selectedCountry.code === country.code ? "opacity-100" : "opacity-0"
                     )}
                   />
