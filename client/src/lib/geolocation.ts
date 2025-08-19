@@ -42,3 +42,20 @@ export function getCurrentLocation(): Promise<GeolocationPosition> {
     );
   });
 }
+
+export const checkLocationPermission = (): Promise<'granted' | 'denied' | 'prompt'> => {
+  return new Promise((resolve) => {
+    if (!navigator.permissions) {
+      resolve('prompt');
+      return;
+    }
+
+    navigator.permissions.query({ name: 'geolocation' })
+      .then((permission) => {
+        resolve(permission.state);
+      })
+      .catch(() => {
+        resolve('prompt');
+      });
+  });
+};

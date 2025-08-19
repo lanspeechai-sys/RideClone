@@ -85,6 +85,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   phone: varchar("phone"),
   dateOfBirth: timestamp("date_of_birth"),
+  country: varchar("country").default("US"),
   preferences: jsonb("preferences"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -102,6 +103,7 @@ export const userSignupSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  country: z.string().default("US"),
 });
 
 export const userProfileUpdateSchema = z.object({
@@ -111,6 +113,7 @@ export const userProfileUpdateSchema = z.object({
   phone: z.string().optional(),
   dateOfBirth: z.string().optional(),
   profileImageUrl: z.string().optional(),
+  country: z.string().optional(),
 });
 
 export const insertUserSchema = createInsertSchema(users);

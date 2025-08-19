@@ -10,13 +10,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useSignup } from "@/hooks/useAuth";
 import { useSearchContext } from "@/contexts/SearchContext";
 import { userSignupSchema, type UserSignup } from "@shared/schema";
-import { Eye, EyeOff, UserPlus, Sparkles } from "lucide-react";
+import { useCountry, COUNTRIES, type Country } from "@/contexts/CountryContext";
+import { checkLocationPermission, getCurrentLocation } from "@/lib/geolocation";
+import { Eye, EyeOff, UserPlus, Sparkles, Globe, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { toast } = useToast();
   const signupMutation = useSignup();
   const { searchData } = useSearchContext();
+  const { selectedCountry, setSelectedCountry } = useCountry();
   const [, setLocation] = useLocation();
 
   const form = useForm<UserSignup>({
@@ -27,11 +32,48 @@ export default function Signup() {
       password: "",
       firstName: "",
       lastName: "",
+      country: selectedCountry.code,
     },
   });
 
+  const handleGetLocation = async () => {
+    setIsGettingLocation(true);
+    try {
+      const permission = await checkLocationPermission();
+      if (permission === 'denied') {
+        toast({
+          title: "Location access denied",
+          description: "Please enable location access in your browser settings",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const position = await getCurrentLocation();
+      toast({
+        title: "Location detected",
+        description: `Found your location (${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)})`,
+      });
+      
+      // Here you could add logic to detect country from coordinates
+      // For now, we'll just show the success message
+    } catch (error: any) {
+      toast({
+        title: "Location access failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
   const onSubmit = async (data: UserSignup) => {
     try {
+      // Sync the country selection to context
+      const selectedCountryObj = COUNTRIES.find(c => c.code === data.country) || selectedCountry;
+      setSelectedCountry(selectedCountryObj);
+      
       await signupMutation.mutateAsync(data);
       toast({
         title: "Account created!",
@@ -191,6 +233,70 @@ export default function Signup() {
                     </FormItem>
                   )}
                 />
+
+                {/* Country Selection */}
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-primary font-semibold flex items-center">
+                        <Globe className="w-4 h-4 mr-2" />
+                        Country/Region
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-country">
+                        <FormControl>
+                          <SelectTrigger className="h-11 border-2 focus:border-primary focus:ring-primary/20">
+                            <SelectValue placeholder="Select your country">
+                              {field.value && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">{COUNTRIES.find(c => c.code === field.value)?.flag}</span>
+                                  <span>{COUNTRIES.find(c => c.code === field.value)?.name}</span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COUNTRIES.map((country) => (
+                            <SelectItem key={country.code} value={country.code} data-testid={`option-${country.code}`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{country.flag}</span>
+                                <span>{country.name}</span>
+                                <span className="text-gray-500">({country.currency})</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Location Permission */}
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-2 border-blue-100">
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-blue-900">Enable Location Access</p>
+                      <p className="text-sm text-blue-700">
+                        Get better ride estimates and automatic location detection
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGetLocation}
+                    disabled={isGettingLocation}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                    data-testid="button-location-permission"
+                  >
+                    {isGettingLocation ? "Getting..." : "Allow"}
+                  </Button>
+                </div>
 
                 <Button
                   type="submit"

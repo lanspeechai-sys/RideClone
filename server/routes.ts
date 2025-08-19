@@ -65,6 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               firstName: user.firstName,
               lastName: user.lastName,
               profileImageUrl: user.profileImageUrl,
+              country: user.country,
             }
           });
         });
@@ -106,6 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             firstName: newUser.firstName,
             lastName: newUser.lastName,
             profileImageUrl: newUser.profileImageUrl,
+            country: newUser.country,
           }
         });
       });
@@ -135,6 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       phone: user.phone,
       dateOfBirth: user.dateOfBirth,
       profileImageUrl: user.profileImageUrl,
+      country: user.country,
     });
   });
 
@@ -162,6 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: updatedUser.phone,
           dateOfBirth: updatedUser.dateOfBirth,
           profileImageUrl: updatedUser.profileImageUrl,
+          country: updatedUser.country,
         }
       });
     } catch (error) {

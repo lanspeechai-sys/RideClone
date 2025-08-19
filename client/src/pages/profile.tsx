@@ -11,13 +11,18 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUpdateProfile, useLogout } from "@/hooks/useAuth";
 import { userProfileUpdateSchema, type UserProfileUpdate } from "@shared/schema";
-import { User, Settings, LogOut, Save, Phone, Calendar, ArrowLeft } from "lucide-react";
+import { useCountry, COUNTRIES, type Country } from "@/contexts/CountryContext";
+import { checkLocationPermission, getCurrentLocation } from "@/lib/geolocation";
+import { User, Settings, LogOut, Save, Phone, Calendar, ArrowLeft, Globe, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const updateProfileMutation = useUpdateProfile();
   const logoutMutation = useLogout();
+  const { selectedCountry, setSelectedCountry, formatPrice } = useCountry();
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [, setLocation] = useLocation();
 
   const form = useForm<UserProfileUpdate>({
@@ -29,15 +34,51 @@ export default function Profile() {
       phone: user?.phone || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       profileImageUrl: user?.profileImageUrl || "",
+      country: user?.country || selectedCountry.code,
     },
   });
 
+  const handleGetLocation = async () => {
+    setIsGettingLocation(true);
+    try {
+      const permission = await checkLocationPermission();
+      if (permission === 'denied') {
+        toast({
+          title: "Location access denied",
+          description: "Please enable location access in your browser settings",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const position = await getCurrentLocation();
+      toast({
+        title: "Location detected",
+        description: `Found your location (${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)})`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Location access failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
   const onSubmit = async (data: UserProfileUpdate) => {
     try {
+      // Sync the country selection to context if changed
+      if (data.country && data.country !== selectedCountry.code) {
+        const selectedCountryObj = COUNTRIES.find(c => c.code === data.country) || selectedCountry;
+        setSelectedCountry(selectedCountryObj);
+      }
+      
       await updateProfileMutation.mutateAsync(data);
       toast({
         title: "Profile updated! ✨",
-        description: "Your changes have been saved successfully.",
+        description: "Your changes have been saved successfully. Ride prices will now display in your local currency.",
       });
     } catch (error: any) {
       toast({
@@ -250,6 +291,91 @@ export default function Profile() {
                             />
                           </FormControl>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Location & Preferences */}
+                <div>
+                  <h3 className="text-lg font-semibold text-primary mb-4 flex items-center">
+                    <Globe className="w-5 h-5 mr-2" />
+                    Location & Preferences
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Current Country Display */}
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-blue-900">Current Location Setting</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-2xl">{selectedCountry.flag}</span>
+                            <span className="text-blue-700 font-medium">{selectedCountry.name}</span>
+                            <span className="text-blue-600">•</span>
+                            <span className="text-blue-600">Prices shown in {selectedCountry.currency}</span>
+                          </div>
+                          <p className="text-sm text-blue-700 mt-1">
+                            Ride prices: {formatPrice(25)} - {formatPrice(45)} for typical rides
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleGetLocation}
+                          disabled={isGettingLocation}
+                          className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                          data-testid="button-location-permission"
+                        >
+                          <MapPin className="w-4 h-4 mr-2" />
+                          {isGettingLocation ? "Getting..." : "Get Location"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Country Selection */}
+                    <FormField
+                      control={form.control}
+                      name="country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-primary font-semibold flex items-center">
+                            <Globe className="w-4 h-4 mr-2" />
+                            Country/Region
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-country">
+                            <FormControl>
+                              <SelectTrigger className="h-11 border-2 focus:border-primary focus:ring-primary/20">
+                                <SelectValue placeholder="Select your country">
+                                  {field.value && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">{COUNTRIES.find(c => c.code === field.value)?.flag}</span>
+                                      <span>{COUNTRIES.find(c => c.code === field.value)?.name}</span>
+                                    </div>
+                                  )}
+                                </SelectValue>
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {COUNTRIES.map((country) => (
+                                <SelectItem key={country.code} value={country.code} data-testid={`option-${country.code}`}>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{country.flag}</span>
+                                    <span>{country.name}</span>
+                                    <span className="text-gray-500">({country.currency})</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <p className="text-sm text-gray-500 mt-1">
+                            Changing your country will update ride prices to local currency
+                          </p>
                         </FormItem>
                       )}
                     />
