@@ -98,15 +98,61 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full hover:bg-white/20"
-                onClick={onMenuClick}
-                data-testid="button-menu"
-              >
-                <Menu className="w-6 h-6 text-primary" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="rounded-full hover:bg-white/20"
+                    data-testid="button-menu"
+                  >
+                    <Menu className="w-6 h-6 text-primary" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 glass-effect border-0 shadow-xl">
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/login")}
+                    className="cursor-pointer hover:bg-primary/10"
+                    data-testid="menu-login"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/signup")}
+                    className="cursor-pointer hover:bg-primary/10"
+                    data-testid="menu-signup"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Sign Up
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/about")}
+                    className="cursor-pointer hover:bg-primary/10"
+                    data-testid="menu-about"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    About Us
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/contact")}
+                    className="cursor-pointer hover:bg-primary/10"
+                    data-testid="menu-contact"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Contact Us
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/pricing")}
+                    className="cursor-pointer hover:bg-primary/10"
+                    data-testid="menu-pricing"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Pricing
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>

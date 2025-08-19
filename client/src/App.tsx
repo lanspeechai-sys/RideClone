@@ -10,6 +10,9 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
+import Pricing from "@/pages/pricing";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,10 +32,13 @@ function Router() {
 
   return (
     <Switch>
-      {/* Always allow access to home page for guest users */}
+      {/* Public routes - accessible to all users */}
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/pricing" component={Pricing} />
       
       {/* Protected routes - only for authenticated users */}
       {isAuthenticated && (

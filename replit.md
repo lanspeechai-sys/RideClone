@@ -39,6 +39,8 @@ This is a full-stack ride comparison application that allows users to compare ri
 ### Key Features
 - **Guest Mode Access**: Users can immediately search for rides without authentication
 - **Smart Authentication Flow**: Login/signup required only when comparing rides, with search data preservation
+- **Fixed Navigation Issue**: Menu bar works correctly after logout, allowing access to login/register and new pages
+- **New Pages**: About Us, Contact Us, and comprehensive Pricing page with Free, Premium ($5/month), and Annual Premium ($50/year) plans
 - **Search History Management**: Local storage of search history with view, delete individual, and clear all functionality
 - **Text Input Persistence**: Search text remains visible in input fields after authentication
 - **Enhanced Booking System**: Complete booking modal with passenger details, confirmation flow, and booking IDs
