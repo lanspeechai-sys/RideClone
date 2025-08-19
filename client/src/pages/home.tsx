@@ -18,12 +18,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchContext } from "@/contexts/SearchContext";
 import { useSearchHistory } from "@/contexts/SearchHistoryContext";
+import { useCountry } from "@/contexts/CountryContext";
 import type { TripRequest, RideComparisonResponse, Location } from "@shared/schema";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const { searchData, setSearchData } = useSearchContext();
   const { addToHistory } = useSearchHistory();
+  const { selectedCountry } = useCountry();
   const [, setLocation] = useLocation();
   
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
@@ -45,7 +47,11 @@ export default function Home() {
       setDropoffText(searchData.dropoff.address);
       
       // Auto-run the comparison if we have saved search data
-      compareRidesMutation.mutate(searchData);
+      const enhancedSearchData: TripRequest = {
+        ...searchData,
+        country: selectedCountry.code,
+      };
+      compareRidesMutation.mutate(enhancedSearchData);
       
       // Clear the search data from context since we've used it
       setSearchData(null);
@@ -91,6 +97,7 @@ export default function Home() {
     const tripRequest: TripRequest = {
       pickup: pickupLocation,
       dropoff: dropoffLocation,
+      country: selectedCountry.code,
     };
 
     // If user is not authenticated, save search data and redirect to login
@@ -117,6 +124,7 @@ export default function Home() {
       compareRidesMutation.mutate({
         pickup: pickupLocation,
         dropoff: dropoffLocation,
+        country: selectedCountry.code,
       });
     }
   };

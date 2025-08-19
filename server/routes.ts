@@ -8,6 +8,33 @@ import { storage } from "./storage";
 
 const UBER_SERVER_TOKEN = process.env.UBER_SERVER_TOKEN || process.env.VITE_UBER_SERVER_TOKEN || "";
 
+// Country configuration
+interface CountryConfig {
+  code: string;
+  name: string;
+  currency: string;
+  currencySymbol: string;
+  services: ("uber" | "bolt" | "yango")[];
+  priceMultiplier: number;
+}
+
+const COUNTRY_CONFIGS: Record<string, CountryConfig> = {
+  "US": { code: "US", name: "United States", currency: "USD", currencySymbol: "$", services: ["uber", "bolt"], priceMultiplier: 1.0 },
+  "GB": { code: "GB", name: "United Kingdom", currency: "GBP", currencySymbol: "£", services: ["uber", "bolt"], priceMultiplier: 0.8 },
+  "DE": { code: "DE", name: "Germany", currency: "EUR", currencySymbol: "€", services: ["uber", "bolt"], priceMultiplier: 0.9 },
+  "FR": { code: "FR", name: "France", currency: "EUR", currencySymbol: "€", services: ["uber", "bolt"], priceMultiplier: 0.95 },
+  "CA": { code: "CA", name: "Canada", currency: "CAD", currencySymbol: "C$", services: ["uber", "bolt"], priceMultiplier: 0.75 },
+  "AU": { code: "AU", name: "Australia", currency: "AUD", currencySymbol: "A$", services: ["uber", "bolt"], priceMultiplier: 0.7 },
+  "IN": { code: "IN", name: "India", currency: "INR", currencySymbol: "₹", services: ["uber", "bolt", "yango"], priceMultiplier: 0.25 },
+  "BR": { code: "BR", name: "Brazil", currency: "BRL", currencySymbol: "R$", services: ["uber", "bolt"], priceMultiplier: 0.35 },
+  "RU": { code: "RU", name: "Russia", currency: "RUB", currencySymbol: "₽", services: ["yango", "bolt"], priceMultiplier: 0.4 },
+  "ZA": { code: "ZA", name: "South Africa", currency: "ZAR", currencySymbol: "R", services: ["uber", "bolt"], priceMultiplier: 0.3 }
+};
+
+function getCountryConfig(countryCode: string): CountryConfig {
+  return COUNTRY_CONFIGS[countryCode] || COUNTRY_CONFIGS["US"];
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
@@ -158,17 +185,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const duration = Math.round(distance * 0.25); // Rough estimate: 4 km/h average speed
       
+      // Get country-specific configuration
+      const countryConfig = getCountryConfig(request.country || "US");
+      
       // Get Uber estimates
-      const uberEstimates = await getUberEstimates(request);
+      const uberEstimates = await getUberEstimates(request, countryConfig);
       
       // Get mock estimates for Bolt and Yango
-      const boltEstimates = getMockBoltEstimates(distance, duration);
-      const yangoEstimates = getMockYangoEstimates(distance, duration);
+      const boltEstimates = getMockBoltEstimates(distance, duration, countryConfig);
+      const yangoEstimates = getMockYangoEstimates(distance, duration, countryConfig);
+      
+      // Filter estimates based on services available in the country
+      const allEstimates = [...uberEstimates, ...boltEstimates, ...yangoEstimates];
+      const availableEstimates = allEstimates.filter(estimate => 
+        countryConfig.services.includes(estimate.provider)
+      );
       
       const response: RideComparisonResponse = {
         tripDistance: distance,
         tripDuration: duration,
-        estimates: [...uberEstimates, ...boltEstimates, ...yangoEstimates],
+        estimates: availableEstimates,
       };
       
       res.json(response);
@@ -207,10 +243,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-async function getUberEstimates(request: any) {
+async function getUberEstimates(request: any, countryConfig: CountryConfig) {
   if (!UBER_SERVER_TOKEN) {
     console.warn("No Uber API token provided, using mock data");
-    return getMockUberEstimates(3200, 12);
+    return getMockUberEstimates(3200, 12, countryConfig);
   }
 
   try {
@@ -247,11 +283,11 @@ async function getUberEstimates(request: any) {
     })) || [];
   } catch (error) {
     console.error("Uber API error:", error);
-    return getMockUberEstimates(3200, 12);
+    return getMockUberEstimates(3200, 12, countryConfig);
   }
 }
 
-function getMockUberEstimates(distance: number, duration: number) {
+function getMockUberEstimates(distance: number, duration: number, countryConfig: CountryConfig) {
   const basePrice = Math.round((distance / 1000) * 3.5 + 5);
   const surge = Math.random() > 0.7 ? 1.2 + Math.random() * 0.8 : 1.0; // 30% chance of surge
   
@@ -261,9 +297,9 @@ function getMockUberEstimates(distance: number, duration: number) {
       provider: "uber" as const,
       serviceName: "UberX",
       description: "Affordable everyday rides",
-      price: Math.round(basePrice * surge),
-      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
-      currency: "USD",
+      price: Math.round(basePrice * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * surge * countryConfig.priceMultiplier) - 1}-${Math.round(basePrice * surge * countryConfig.priceMultiplier) + 2}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 4) + 2} min away`,
       capacity: 4,
       category: "economy" as const,
@@ -278,9 +314,9 @@ function getMockUberEstimates(distance: number, duration: number) {
       provider: "uber" as const,
       serviceName: "Uber Comfort",
       description: "Newer cars, extra space",
-      price: Math.round(basePrice * 1.35 * surge),
-      priceRange: `$${Math.round(basePrice * 1.25 * surge)}-${Math.round(basePrice * 1.5 * surge)}`,
-      currency: "USD",
+      price: Math.round(basePrice * 1.35 * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * 1.25 * surge * countryConfig.priceMultiplier)}-${Math.round(basePrice * 1.5 * surge * countryConfig.priceMultiplier)}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 3) + 3} min away`,
       capacity: 4,
       category: "premium" as const,
@@ -293,7 +329,7 @@ function getMockUberEstimates(distance: number, duration: number) {
   ];
 }
 
-function getMockBoltEstimates(distance: number, duration: number) {
+function getMockBoltEstimates(distance: number, duration: number, countryConfig: CountryConfig) {
   const basePrice = Math.round((distance / 1000) * 3.2 + 4.5);
   const surge = Math.random() > 0.8 ? 1.1 + Math.random() * 0.4 : 1.0; // 20% chance of surge
   
@@ -303,9 +339,9 @@ function getMockBoltEstimates(distance: number, duration: number) {
       provider: "bolt" as const,
       serviceName: "Bolt",
       description: "Fast & affordable",
-      price: Math.round(basePrice * surge),
-      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
-      currency: "USD",
+      price: Math.round(basePrice * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * surge * countryConfig.priceMultiplier) - 1}-${Math.round(basePrice * surge * countryConfig.priceMultiplier) + 2}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 4) + 4} min away`,
       capacity: 4,
       category: "economy" as const,
@@ -320,9 +356,9 @@ function getMockBoltEstimates(distance: number, duration: number) {
       provider: "bolt" as const,
       serviceName: "Bolt Comfort",
       description: "More comfortable rides",
-      price: Math.round(basePrice * 1.25 * surge),
-      priceRange: `$${Math.round(basePrice * 1.15 * surge)}-${Math.round(basePrice * 1.35 * surge)}`,
-      currency: "USD",
+      price: Math.round(basePrice * 1.25 * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * 1.15 * surge * countryConfig.priceMultiplier)}-${Math.round(basePrice * 1.35 * surge * countryConfig.priceMultiplier)}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 3) + 5} min away`,
       capacity: 4,
       category: "premium" as const,
@@ -335,7 +371,7 @@ function getMockBoltEstimates(distance: number, duration: number) {
   ];
 }
 
-function getMockYangoEstimates(distance: number, duration: number) {
+function getMockYangoEstimates(distance: number, duration: number, countryConfig: CountryConfig) {
   const basePrice = Math.round((distance / 1000) * 3.0 + 4);
   const surge = Math.random() > 0.85 ? 1.05 + Math.random() * 0.3 : 1.0; // 15% chance of surge
   
@@ -345,9 +381,9 @@ function getMockYangoEstimates(distance: number, duration: number) {
       provider: "yango" as const,
       serviceName: "Economy",
       description: "Budget-friendly option",
-      price: Math.round(basePrice * surge),
-      priceRange: `$${Math.round(basePrice * surge) - 1}-${Math.round(basePrice * surge) + 2}`,
-      currency: "USD",
+      price: Math.round(basePrice * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * surge * countryConfig.priceMultiplier) - 1}-${Math.round(basePrice * surge * countryConfig.priceMultiplier) + 2}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 5) + 6} min away`,
       capacity: 4,
       category: "economy" as const,
@@ -362,9 +398,9 @@ function getMockYangoEstimates(distance: number, duration: number) {
       provider: "yango" as const,
       serviceName: "Comfort",
       description: "More comfort for your journey",
-      price: Math.round(basePrice * 1.3 * surge),
-      priceRange: `$${Math.round(basePrice * 1.2 * surge)}-${Math.round(basePrice * 1.4 * surge)}`,
-      currency: "USD",
+      price: Math.round(basePrice * 1.3 * surge * countryConfig.priceMultiplier),
+      priceRange: `${countryConfig.currencySymbol}${Math.round(basePrice * 1.2 * surge * countryConfig.priceMultiplier)}-${Math.round(basePrice * 1.4 * surge * countryConfig.priceMultiplier)}`,
+      currency: countryConfig.currency,
       arrivalTime: `${Math.floor(Math.random() * 4) + 7} min away`,
       capacity: 4,
       category: "premium" as const,

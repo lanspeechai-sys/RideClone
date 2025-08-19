@@ -2,6 +2,7 @@ import { Menu, Settings, Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { CountrySelector } from "@/components/country-selector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +42,9 @@ export function AppHeader({ title, onMenuClick, showNotifications = false }: App
             <h1 className="text-xl font-bold text-primary">{title}</h1>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            <CountrySelector />
+            
             {showNotifications && (
               <Button 
                 variant="ghost" 

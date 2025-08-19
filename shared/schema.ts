@@ -37,6 +37,7 @@ export const rideEstimateSchema = z.object({
 export const tripRequestSchema = z.object({
   pickup: locationSchema,
   dropoff: locationSchema,
+  country: z.string().default("US"), // Country code for region-specific pricing
 });
 
 export const rideComparisonResponseSchema = z.object({

@@ -6,6 +6,7 @@ import { BookingModal } from "./booking-modal";
 import { PriceAlerts } from "./price-alerts";
 import { ArrowUpDown, Clock, MapPin, Star, DollarSign } from "lucide-react";
 import type { RideEstimate, Location } from "@shared/schema";
+import { useCountry } from "@/contexts/CountryContext";
 
 interface RideComparisonProps {
   estimates: RideEstimate[];
@@ -18,6 +19,7 @@ interface RideComparisonProps {
 export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropoff }: RideComparisonProps) {
   const [selectedRide, setSelectedRide] = useState<RideEstimate | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const { formatPrice } = useCountry();
   const sortedEstimates = [...estimates].sort((a, b) => {
     switch (sortBy) {
       case "price":
@@ -121,7 +123,7 @@ export function RideComparison({ estimates, sortBy, onSortChange, pickup, dropof
                   <div className="text-right space-y-2">
                     <div className="space-y-1">
                       <div className={`text-lg font-bold ${isLowestPrice ? "text-green-700" : "text-primary"}`} data-testid={`text-price-${ride.id}`}>
-                        ${ride.price.toFixed(2)}
+                        {formatPrice(ride.price)}
                         {isLowestPrice && (
                           <span className="ml-1 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full">
                             BEST
