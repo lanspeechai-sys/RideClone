@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useSignup } from "@/hooks/useAuth";
+import { useSearchContext } from "@/contexts/SearchContext";
 import { userSignupSchema, type UserSignup } from "@shared/schema";
 import { Eye, EyeOff, UserPlus, Sparkles } from "lucide-react";
 
@@ -15,6 +16,8 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const signupMutation = useSignup();
+  const { searchData } = useSearchContext();
+  const [, setLocation] = useLocation();
 
   const form = useForm<UserSignup>({
     resolver: zodResolver(userSignupSchema),
@@ -31,10 +34,11 @@ export default function Signup() {
     try {
       await signupMutation.mutateAsync(data);
       toast({
-        title: "Account created! 🎉",
-        description: "Welcome to RideCompare! You're now logged in.",
+        title: "Account created!",
+        description: searchData ? "Welcome! Continuing your ride search..." : "Welcome to RideCompare! You're now logged in.",
       });
-      // Navigation will be handled by the App component based on auth state
+      // Redirect to home page to restore search context
+      setLocation("/");
     } catch (error: any) {
       toast({
         title: "Signup failed",

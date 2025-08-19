@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useLogin } from "@/hooks/useAuth";
+import { useSearchContext } from "@/contexts/SearchContext";
 import { userLoginSchema, type UserLogin } from "@shared/schema";
 import { Eye, EyeOff, Sparkles, Zap } from "lucide-react";
 
@@ -16,6 +17,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const loginMutation = useLogin();
+  const { searchData } = useSearchContext();
+  const [, setLocation] = useLocation();
 
   const form = useForm<UserLogin>({
     resolver: zodResolver(userLoginSchema),
@@ -29,10 +32,11 @@ export default function Login() {
     try {
       await loginMutation.mutateAsync(data);
       toast({
-        title: "Welcome back! 🎉",
-        description: "You've successfully logged in to RideCompare.",
+        title: "Welcome back!",
+        description: searchData ? "Continuing your ride search..." : "You've successfully logged in to RideCompare.",
       });
-      // Navigation will be handled by the App component based on auth state
+      // Redirect to home page to restore search context
+      setLocation("/");
     } catch (error: any) {
       toast({
         title: "Login failed",

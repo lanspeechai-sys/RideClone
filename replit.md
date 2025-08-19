@@ -10,17 +10,20 @@ This is a full-stack ride comparison application that allows users to compare ri
 - Design preference: Vibrant, modern colors instead of black and white interface
 - Authentication: Login/signup pages with demo credentials and profile editing functionality
 - Profile navigation: Users requested back button and logout redirect to login page
+- Guest Mode: Users can access search immediately without authentication, login required only when clicking "Compare Rides"
+- Search Persistence: Search data should be preserved across authentication flow and restored after login/signup
 
 ## System Architecture
 
 ### Frontend Architecture
 - **React with TypeScript**: Modern functional components using hooks for state management
 - **Vite**: Fast build tool and development server with hot module replacement
-- **Wouter**: Lightweight client-side routing library with authentication-based routing
+- **Wouter**: Lightweight client-side routing library with guest/authenticated routing
 - **TanStack Query**: Server state management for API calls, caching, and background refetching
 - **shadcn/ui**: Comprehensive component library built on Radix UI primitives
 - **Tailwind CSS**: Utility-first CSS framework with vibrant gradient color scheme
 - **Authentication State**: useAuth hook for managing user sessions and profile data
+- **Search Context**: React context for preserving search data across authentication flow
 
 ### Backend Architecture
 - **Express.js**: RESTful API server with middleware for JSON parsing and logging
@@ -34,8 +37,11 @@ This is a full-stack ride comparison application that allows users to compare ri
 - **Schema-first Design**: Shared type definitions between client and server using Zod schemas
 
 ### Key Features
+- **Guest Mode Access**: Users can immediately search for rides without authentication
+- **Smart Authentication Flow**: Login/signup required only when comparing rides, with search data preservation
 - **Geolocation Integration**: Browser geolocation API for automatic current location detection
 - **Multi-provider Comparison**: Real Uber API integration with mock data for Bolt and Yango
+- **Search Context Persistence**: Search data preserved across authentication and restored after login
 - **Responsive Design**: Mobile-first approach with adaptive layouts
 - **Real-time Sorting**: Dynamic sorting by price, time, or service rating
 - **Error Handling**: Comprehensive error states with retry mechanisms

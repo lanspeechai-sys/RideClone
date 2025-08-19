@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SearchProvider } from "@/contexts/SearchContext";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -27,18 +28,16 @@ function Router() {
 
   return (
     <Switch>
-      {isAuthenticated ? (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/profile" component={Profile} />
-        </>
-      ) : (
-        <>
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={Signup} />
-          <Route path="/" component={() => <Login />} />
-        </>
+      {/* Always allow access to home page for guest users */}
+      <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      
+      {/* Protected routes - only for authenticated users */}
+      {isAuthenticated && (
+        <Route path="/profile" component={Profile} />
       )}
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -47,10 +46,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <SearchProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </SearchProvider>
     </QueryClientProvider>
   );
 }

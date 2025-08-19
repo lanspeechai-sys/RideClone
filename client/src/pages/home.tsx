@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { LocationInputs } from "@/components/location-inputs";
 import { RideComparison } from "@/components/ride-comparison";
@@ -12,9 +13,15 @@ import { FareTracker } from "@/components/fare-tracker";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useSearchContext } from "@/contexts/SearchContext";
 import type { TripRequest, RideComparisonResponse, Location } from "@shared/schema";
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+  const { searchData, setSearchData } = useSearchContext();
+  const [, setLocation] = useLocation();
+  
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
   const [dropoffLocation, setDropoffLocation] = useState<Location | null>(null);
   const [comparisonData, setComparisonData] = useState<RideComparisonResponse | null>(null);
@@ -22,6 +29,20 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"price" | "time" | "rating">("price");
   const [showRecentLocations, setShowRecentLocations] = useState(true);
   const { toast } = useToast();
+
+  // Restore search data from context after login
+  useEffect(() => {
+    if (isAuthenticated && searchData) {
+      setPickupLocation(searchData.pickup);
+      setDropoffLocation(searchData.dropoff);
+      
+      // Auto-run the comparison if we have saved search data
+      compareRidesMutation.mutate(searchData);
+      
+      // Clear the search data from context since we've used it
+      setSearchData(null);
+    }
+  }, [isAuthenticated, searchData, setSearchData]);
 
   const compareRidesMutation = useMutation({
     mutationFn: async (request: TripRequest) => {
@@ -55,10 +76,24 @@ export default function Home() {
       return;
     }
 
-    compareRidesMutation.mutate({
+    const tripRequest: TripRequest = {
       pickup: pickupLocation,
       dropoff: dropoffLocation,
-    });
+    };
+
+    // If user is not authenticated, save search data and redirect to login
+    if (!isAuthenticated) {
+      setSearchData(tripRequest);
+      toast({
+        title: "Login required",
+        description: "Please sign in to compare rides. Your search will be saved.",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    // User is authenticated, proceed with ride comparison
+    compareRidesMutation.mutate(tripRequest);
   };
 
   const handleRefresh = () => {
